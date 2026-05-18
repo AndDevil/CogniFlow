@@ -1,0 +1,65 @@
+# =========================================================================
+# Spring Boot & Build Core
+# =========================================================================
+HELP.md
+target/
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# CRITICAL FIX: Do NOT ignore the maven wrapper jar!
+# The '!' ensures this binary stays tracked so ./mvnw works on clean clones.
+!.mvn/wrapper/maven-wrapper.jar
+
+# =========================================================================
+# Secrets & Configuration Guardrails (Protects API Keys)
+# =========================================================================
+.env
+*.env
+.env.*
+application-local.properties
+application-dev.properties
+application.properties
+
+# =========================================================================
+# VS Code Workspace
+# =========================================================================
+.vscode/
+*.code-workspace
+
+# =========================================================================
+# IntelliJ IDEA
+# =========================================================================
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+
+# =========================================================================
+# STS / Eclipse
+# =========================================================================
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache/
+
+# =========================================================================
+# NetBeans
+# =========================================================================
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# =========================================================================
+# Operating System Garbage
+# =========================================================================
+.DS_Store
+Thumbs.db
