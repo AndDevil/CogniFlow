@@ -4,6 +4,9 @@ import io.weaviate.client.Config;
 import io.weaviate.client.WeaviateClient;
 import io.weaviate.client.base.Result;
 import io.weaviate.client.v1.data.model.WeaviateObject;
+import io.weaviate.client.v1.graphql.model.GraphQLResponse;
+import io.weaviate.client.v1.graphql.query.argument.NearVectorArgument;
+import io.weaviate.client.v1.graphql.query.fields.Field;
 import io.weaviate.client.v1.schema.model.DataType;
 import io.weaviate.client.v1.schema.model.Property;
 import io.weaviate.client.v1.schema.model.WeaviateClass;
@@ -11,6 +14,7 @@ import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -93,6 +97,52 @@ public class VectorStoreService {
             log.error("Weaviate Storage Error: {}", result.getError().getMessages());
         } else {
             log.info("Smart Insight for {} successfully saved.", symbol);
+        }
+    }
+
+    public List<Map<String, Object>> semanticSearch(float[] queryVector, int limit) {
+        log.info("Executing semantic vector search in Weaviate...");
+
+        // 1. Box the primitive float[] to Float[] for the Weaviate Client
+        Float[] boxedVector = new Float[queryVector.length];
+        for (int i = 0; i < queryVector.length; i++) {
+            boxedVector[i] = queryVector[i];
+        }
+
+        // 2. Define the data fields we want to pull back out
+        Field symbol = Field.builder().name("symbol").build();
+        Field price = Field.builder().name("price").build();
+        Field insight = Field.builder().name("insight").build();
+        Field timestamp = Field.builder().name("timestamp").build();
+
+        // 3. Build the NearVector argument (the mathematical search mechanism)
+        NearVectorArgument nearVector = NearVectorArgument.builder()
+                .vector(boxedVector)
+                .build();
+
+        try {
+            // 4. Run the GraphQL Get Query
+            Result<GraphQLResponse> result = client.graphQL().get()
+                    .withClassName("MarketInsight")
+                    .withFields(symbol, price, insight, timestamp)
+                    .withNearVector(nearVector)
+                    .withLimit(limit)
+                    .run();
+
+            if (result.hasErrors()) {
+                log.error("Weaviate search error: {}", result.getError().getMessages());
+                return Collections.emptyList();
+            }
+
+            // 5. Parse the raw response map
+            Map<String, Object> data = (Map<String, Object>) result.getResult().getData();
+            Map<String, Object> get = (Map<String, Object>) data.get("Get");
+            List<Map<String, Object>> insights = (List<Map<String, Object>>) get.get("MarketInsight");
+
+            return insights != null ? insights : Collections.emptyList();
+        } catch (Exception e) {
+            log.error("Failed to execute vector search", e);
+            return Collections.emptyList();
         }
     }
 }

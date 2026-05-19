@@ -10,37 +10,56 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
+import java.util.List;
+
 @Service
 @Slf4j
 public class MarketDataService {
 
     private final RestClient restClient;
     private final AiAnalysisService aiService;
-    private final VectorStoreService vectorStore;
+    private final VectorStoreService vectorStoreService;
     private final EmbeddingService embeddingService;
+
+    // A curated, safe list of tickers to track within daily free-tier limits
+    private static final List<String> TRACKED_TICKERS = List.of("IBM", "AAPL", "MSFT");
 
     @Value("${alphavantage.api.key}")
     private String apiKey;
 
     public MarketDataService(RestClient.Builder builder,
                              AiAnalysisService aiService,
-                             VectorStoreService vectorStore,
+                             VectorStoreService vectorStoreService,
                              EmbeddingService embeddingService) {
         this.restClient = builder.baseUrl("https://www.alphavantage.co").build();
         this.aiService = aiService;
-        this.vectorStore = vectorStore;
+        this.vectorStoreService = vectorStoreService;
         this.embeddingService = embeddingService;
     }
 
     /**
-     * Heartbeat: Runs every hour (3600000ms).
-     * You can add more symbols to the list to expand your data lake.
+     * Runs once every 3 hours (10,800,000 ms).
+     * With 3 tickers, this consumes 24 API calls per day, staying safely
+     * under Alpha Vantage's strict 25 requests/day limit.
      */
-    @Scheduled(fixedRate = 3600000)
+    @Scheduled(fixedRate = 10800000)
     public void fetchAndAnalyzeScheduled() {
-        log.info("--- Scheduled Pulse: Starting Automated Market Scan ---");
-        fetchAndAnalyze("IBM");
-        // fetchAndAnalyze("MSFT"); // Feel free to add more!
+        log.info("--- Scheduled Pulse: Starting Multi-Ticker Market Scan ---");
+
+        for (String symbol : TRACKED_TICKERS) {
+            fetchAndAnalyze(symbol);
+
+            // Defensive Guardrail: Sleep for 15 seconds between tickers
+            // to safely avoid bursting the 5 requests/minute threshold.
+            try {
+                log.info("Cooldown delay between ticker fetches...");
+                Thread.sleep(15000);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                log.error("Sync cooldown interrupted", e);
+            }
+        }
+        log.info("--- Multi-Ticker Market Scan Batch Complete ---");
     }
 
     public void fetchAndAnalyze(String symbol) {
@@ -58,7 +77,7 @@ public class MarketDataService {
                     .retrieve()
                     .body(MarketDataResponse.class);
 
-            if (response != null && response.getGlobalQuote() != null) {
+            if (response != null && response.getGlobalQuote() != null && response.getGlobalQuote().getPrice() != null) {
                 String price = response.getGlobalQuote().getPrice();
                 log.info("Success! Current Price for {}: {}", symbol, price);
 
@@ -71,25 +90,20 @@ public class MarketDataService {
 
                 // 4. PERSISTENCE: Save to Long-Term Memory (Weaviate)
                 if (vector != null) {
-                    vectorStore.storeInsight(symbol, price, cleanInsight, vector);
-                    log.info("--- COGNIFLOW PIPELINE COMPLETE ---");
-                    log.info("Insight: {}", cleanInsight);
-                    log.info("------------------------------------");
+                    vectorStoreService.storeInsight(symbol, price, cleanInsight, vector);
+                    log.info("Pipeline Step Complete: Smart Insight for {} saved.", symbol);
                 } else {
-                    log.error("Failed to generate vector. Memory storage aborted.");
+                    log.error("Failed to generate vector for {}. Storage aborted.", symbol);
                 }
 
             } else {
-                log.warn("API limit or symbol error. Alpha Vantage is blocking the request.");
+                log.warn("API limit hit, invalid symbol, or empty response for ticker: {}", symbol);
             }
         } catch (Exception e) {
-            log.error("Pipeline failure: Ensure all Docker containers and API keys are active.", e);
+            log.error("Pipeline failure on ticker " + symbol, e);
         }
     }
 
-    /**
-     * Extracts the core text from the Gemini JSON response.
-     */
     private String extractTextFromResponse(String rawJson) {
         try {
             if (rawJson.contains("\"text\": \"")) {
