@@ -1,5 +1,6 @@
 package com.shr.cogniflow.service;
 
+import com.shr.cogniflow.config.CogniflowConfig;
 import io.weaviate.client.Config;
 import io.weaviate.client.WeaviateClient;
 import io.weaviate.client.base.Result;
@@ -25,15 +26,22 @@ import java.util.Map;
 @Slf4j
 public class VectorStoreService {
 
+    private final CogniflowConfig config;
     private WeaviateClient client;
     private static final String CLASS_NAME = "MarketInsight";
 
+    public VectorStoreService(CogniflowConfig config) {
+        this.config = config;
+    }
+
     @PostConstruct
     public void init() {
-        Config config = new Config("http", "localhost:8081");
-        this.client = new WeaviateClient(config);
+        CogniflowConfig.Weaviate wv = config.getWeaviate();
+        Config weaviateConfig = new Config(wv.getScheme(), wv.getHost() + ":" + wv.getPort());
+        this.client = new WeaviateClient(weaviateConfig);
 
-        log.info("Checking Weaviate for '{}' schema...", CLASS_NAME);
+        log.info("Checking Weaviate for '{}' schema at {}://{}:{}...", 
+                CLASS_NAME, wv.getScheme(), wv.getHost(), wv.getPort());
 
         Result<Boolean> check = client.schema().exists().withClassName(CLASS_NAME).run();
 

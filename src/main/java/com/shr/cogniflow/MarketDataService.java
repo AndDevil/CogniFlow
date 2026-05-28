@@ -2,12 +2,12 @@ package com.shr.cogniflow;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.shr.cogniflow.config.CogniflowConfig;
 import com.shr.cogniflow.dto.MarketDataResponse;
 import com.shr.cogniflow.service.AiAnalysisService;
 import com.shr.cogniflow.service.EmbeddingService;
 import com.shr.cogniflow.service.VectorStoreService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
@@ -22,42 +22,38 @@ public class MarketDataService {
     private final AiAnalysisService aiService;
     private final VectorStoreService vectorStoreService;
     private final EmbeddingService embeddingService;
-    private final ObjectMapper objectMapper; // Built-in Spring bean for safe JSON parsing
-    private final String apiKey;
+    private final ObjectMapper objectMapper;
+    private final CogniflowConfig config;
 
-    // A curated, safe list of tickers to track within daily free-tier limits
-    private static final List<String> TRACKED_TICKERS = List.of("IBM", "AAPL", "MSFT");
-
-    // Fixed the lifecycle bug by shifting @Value injection to the constructor parameters
     public MarketDataService(RestClient.Builder builder,
                              AiAnalysisService aiService,
                              VectorStoreService vectorStoreService,
                              EmbeddingService embeddingService,
                              ObjectMapper objectMapper,
-                             @Value("${alphavantage.api.key}") String apiKey) {
+                             CogniflowConfig config) {
         this.restClient = builder.baseUrl("https://www.alphavantage.co").build();
         this.aiService = aiService;
         this.vectorStoreService = vectorStoreService;
         this.embeddingService = embeddingService;
         this.objectMapper = objectMapper;
-        this.apiKey = apiKey;
+        this.config = config;
 
-        // This check will now execute correctly on startup since apiKey is fully initialized
-        if (this.apiKey == null || this.apiKey.isEmpty() || "your_default_api_key".equals(this.apiKey)) {
-            log.warn("Alpha Vantage API key is not configured. Please set the 'alphavantage.api.key' property.");
+        String apiKey = config.getAlphavantageApiKey();
+        if (apiKey == null || apiKey.isEmpty() || "your_default_api_key".equals(apiKey)) {
+            log.warn("Alpha Vantage API key is not configured. Please set 'cogniflow.alphavantage-api-key'.");
         }
     }
 
     /**
      * Runs once every 3 hours (10,800,000 ms).
-     * With 3 tickers, this consumes 24 API calls per day, staying safely
-     * under Alpha Vantage's strict 25 requests/day limit.
+     * Staying safely under Alpha Vantage's strict free-tier limits.
      */
     @Scheduled(fixedRate = 10800000, initialDelay = 120000)
     public void fetchAndAnalyzeScheduled() {
         log.info("--- Scheduled Pulse: Starting Multi-Ticker Market Scan ---");
 
-        for (String symbol : TRACKED_TICKERS) {
+        List<String> tickers = config.getTrackedTickers();
+        for (String symbol : tickers) {
             fetchAndAnalyze(symbol);
 
             // Defensive Guardrail: Sleep for 15 seconds between tickers
@@ -83,7 +79,7 @@ public class MarketDataService {
                             .path("/query")
                             .queryParam("function", "GLOBAL_QUOTE")
                             .queryParam("symbol", symbol)
-                            .queryParam("apikey", apiKey)
+                            .queryParam("apikey", config.getAlphavantageApiKey())
                             .build())
                     .retrieve()
                     .body(MarketDataResponse.class);
@@ -115,8 +111,6 @@ public class MarketDataService {
         }
     }
 
-    // Upgraded to robust JSON parsing using ObjectMapper tree traversal while preserving fallback logic
-    // Replace your current extractTextFromResponse method with this temporary diagnostic version
     private String extractTextFromResponse(String rawJson) {
         if (rawJson == null) {
             return "";
@@ -124,7 +118,6 @@ public class MarketDataService {
 
         String trimmed = rawJson.trim();
 
-        // Defensive check: Only attempt JSON parsing if the string actually looks like JSON
         if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
             try {
                 JsonNode root = objectMapper.readTree(trimmed);
@@ -133,12 +126,10 @@ public class MarketDataService {
                     return textNode.asText().trim();
                 }
             } catch (Exception e) {
-                // Log as debug or fine-grained tracing instead of a scary warning
                 log.debug("Attempted to parse as JSON but failed, passing text along.", e);
             }
         }
 
-        // If it's plain text (like your current AI output), cleanly return it as-is
         return trimmed;
     }
 }

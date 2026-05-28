@@ -1,8 +1,8 @@
 package com.shr.cogniflow.service;
 
+import com.shr.cogniflow.config.CogniflowConfig;
 import com.shr.cogniflow.dto.GlobalQuote;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClient;
@@ -15,13 +15,11 @@ import java.util.Map;
 public class AiAnalysisService {
 
     private final RestClient restClient;
+    private final CogniflowConfig config;
 
-    // Added colon fallback so the app boots even if the key is missing from environment variables
-    @Value("${google.ai.api.key:}")
-    private String apiKey;
-
-    public AiAnalysisService(RestClient.Builder builder) {
+    public AiAnalysisService(RestClient.Builder builder, CogniflowConfig config) {
         this.restClient = builder.baseUrl("https://generativelanguage.googleapis.com").build();
+        this.config = config;
     }
 
     public String analyzeMarketTrend(GlobalQuote quote) {
@@ -36,6 +34,8 @@ public class AiAnalysisService {
                 "contents", List.of(Map.of("parts", List.of(Map.of("text", prompt))))
         );
 
+        String apiKey = config.getGoogleAiApiKey();
+
         try {
             Map response = restClient.post()
                     .uri("/v1/models/gemini-2.5-flash:generateContent?key=" + apiKey)
@@ -46,7 +46,6 @@ public class AiAnalysisService {
             return extractTextFromResponse(response);
 
         } catch (HttpStatusCodeException e) {
-            // RESILIENCE FIX: If Google's servers return a 503, provide a programmatic fallback instead of crashing.
             if (e.getStatusCode().value() == 404) {
                 log.warn("Gemini API endpoint not found (Status: 404). Check the API URL and model name.");
                 return "AI analysis is currently unavailable due to a configuration issue.";

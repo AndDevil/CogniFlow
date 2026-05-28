@@ -1,7 +1,7 @@
 package com.shr.cogniflow.service;
 
+import com.shr.cogniflow.config.CogniflowConfig;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import java.util.List;
@@ -12,12 +12,11 @@ import java.util.Map;
 public class EmbeddingService {
 
     private final RestClient restClient;
+    private final CogniflowConfig config;
 
-    @Value("${google.ai.api.key}")
-    private String apiKey;
-
-    public EmbeddingService(RestClient.Builder builder) {
+    public EmbeddingService(RestClient.Builder builder, CogniflowConfig config) {
         this.restClient = builder.baseUrl("https://generativelanguage.googleapis.com").build();
+        this.config = config;
     }
 
     public float[] getEmbedding(String text) {
@@ -27,6 +26,8 @@ public class EmbeddingService {
                 "model", "models/gemini-embedding-001",
                 "content", Map.of("parts", List.of(Map.of("text", text)))
         );
+
+        String apiKey = config.getGoogleAiApiKey();
 
         try {
             Map response = restClient.post()
