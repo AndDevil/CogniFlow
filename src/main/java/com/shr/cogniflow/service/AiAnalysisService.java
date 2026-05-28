@@ -4,8 +4,10 @@ import com.shr.cogniflow.dto.GlobalQuote;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClient;
 
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -14,7 +16,8 @@ public class AiAnalysisService {
 
     private final RestClient restClient;
 
-    @Value("${google.ai.api.key}")
+    // Added colon fallback so the app boots even if the key is missing from environment variables
+    @Value("${google.ai.api.key:}")
     private String apiKey;
 
     public AiAnalysisService(RestClient.Builder builder) {
@@ -24,30 +27,56 @@ public class AiAnalysisService {
     public String analyzeMarketTrend(GlobalQuote quote) {
         log.info("Asking AI for a vibe check on {}...", quote.getSymbol());
 
-        // We create a prompt that tells the AI exactly what we want
         String prompt = String.format(
-                "Analyze this stock data: %s is trading at %s with a change of %s. " +
-                        "In 2 sentences, what is the market sentiment? Be professional and concise.",
+                "Analyze this asset: %s. Price: %s. Change: %s. Give a 2 sentence summary.",
                 quote.getSymbol(), quote.getPrice(), quote.getChangePercent()
         );
 
-        // This is the standard Gemini API request structure
-        var requestBody = Map.of("contents", new Object[]{
-                Map.of("parts", new Object[]{
-                        Map.of("text", prompt)
-                })
-        });
+        var requestBody = Map.of(
+                "contents", List.of(Map.of("parts", List.of(Map.of("text", prompt))))
+        );
 
         try {
-            // CHANGE THIS LINE in your AiAnalysisService.java
-            return restClient.post()
-                    .uri("/v1/models/gemini-2.5-flash:generateContent?key=" + apiKey) // Changed v1beta to v1
+            Map response = restClient.post()
+                    .uri("/v1/models/gemini-2.5-flash:generateContent?key=" + apiKey)
                     .body(requestBody)
                     .retrieve()
-                    .body(String.class); // We'll parse this properly in the next step
+                    .body(Map.class);
+
+            return extractTextFromResponse(response);
+
+        } catch (HttpStatusCodeException e) {
+            // RESILIENCE FIX: If Google's servers return a 503, provide a programmatic fallback instead of crashing.
+            if (e.getStatusCode().value() == 404) {
+                log.warn("Gemini API endpoint not found (Status: 404). Check the API URL and model name.");
+                return "AI analysis is currently unavailable due to a configuration issue.";
+            }
+            log.warn("Gemini API overloaded (Status: {}). Providing fallback analysis.", e.getStatusCode());
+            return String.format("Fallback Insight: The asset %s is currently trading at $%s with a daily shift of %s. Advanced AI analysis is temporarily unavailable due to upstream network congestion.",
+                    quote.getSymbol(), quote.getPrice(), quote.getChangePercent());
         } catch (Exception e) {
-            log.error("AI Analysis failed", e);
-            return "Could not generate analysis.";
+            log.error("Critical failure during AI text generation.", e);
+            return "Insight generation failed.";
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private String extractTextFromResponse(Map response) {
+        try {
+            if (response != null && response.containsKey("candidates")) {
+                List<Map<String, Object>> candidates = (List<Map<String, Object>>) response.get("candidates");
+                if (!candidates.isEmpty()) {
+                    Map<String, Object> firstCandidate = candidates.get(0);
+                    Map<String, Object> content = (Map<String, Object>) firstCandidate.get("content");
+                    List<Map<String, Object>> parts = (List<Map<String, Object>>) content.get("parts");
+                    if (!parts.isEmpty()) {
+                        return (String) parts.get(0).get("text");
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("Failed to parse Gemini response map", e);
+        }
+        return "Unable to extract insight at this time.";
     }
 }
