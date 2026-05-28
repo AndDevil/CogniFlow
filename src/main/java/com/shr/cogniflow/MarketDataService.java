@@ -76,8 +76,17 @@ public class MarketDataService {
     }
 
     @CircuitBreaker(name = "alphaVantage", fallbackMethod = "fetchAndAnalyzeFallback")
-    public Map<String, Object> fetchAndAnalyze(String symbol) {
-        log.info("CogniFlow is pulling live data for: {}", symbol);
+    public Map<String, Object> fetchAndAnalyze(String query) {
+        log.info("CogniFlow is pulling live data for query: {}", query);
+
+        // 0. AI Name Resolution (e.g. "Visa" -> "V")
+        String symbol = aiService.resolveCompanyToTicker(query);
+        if ("UNKNOWN".equals(symbol)) {
+            log.warn("Could not resolve '{}' to a valid publicly traded ticker.", query);
+            return Map.of("error", "Could not resolve '" + query + "' to a valid publicly traded ticker symbol.");
+        }
+        
+        log.info("Resolved query '{}' to ticker '{}'", query, symbol);
 
         // 1. INGESTION: Fetch from Alpha Vantage
         MarketDataResponse response = restClient.get()

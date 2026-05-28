@@ -93,4 +93,35 @@ class AiAnalysisServiceTest {
         assertTrue(result.contains("IBM"));
         assertTrue(result.contains("150.00"));
     }
+
+    @Test
+    void testResolveCompanyToTicker_Success() {
+        when(config.getGoogleAiApiKey()).thenReturn("fake-key");
+
+        when(restClient.post()).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.uri(anyString())).thenReturn(requestBodySpec);
+        when(requestBodySpec.body(any(Map.class))).thenReturn(requestBodySpec);
+        when(requestBodySpec.retrieve()).thenReturn(responseSpec);
+        
+        Map<String, Object> mockResponse = Map.of(
+                "candidates", List.of(Map.of(
+                        "content", Map.of(
+                                "parts", List.of(Map.of(
+                                        "text", " V "
+                                ))
+                        )
+                ))
+        );
+        when(responseSpec.body(Map.class)).thenReturn(mockResponse);
+
+        String result = aiAnalysisService.resolveCompanyToTicker("Visa");
+
+        assertEquals("V", result);
+    }
+
+    @Test
+    void testResolveCompanyToTickerFallback() {
+        String result = aiAnalysisService.resolveCompanyToTickerFallback("Apple", new RuntimeException("API down"));
+        assertEquals("APPLE", result);
+    }
 }

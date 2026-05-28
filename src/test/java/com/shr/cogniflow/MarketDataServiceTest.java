@@ -76,6 +76,7 @@ class MarketDataServiceTest {
     void testFetchAndAnalyze_Success() {
         String symbol = "IBM";
         when(config.getAlphavantageApiKey()).thenReturn("fake-key");
+        when(aiService.resolveCompanyToTicker(symbol)).thenReturn(symbol);
 
         MarketDataResponse mockResponse = new MarketDataResponse();
         GlobalQuote quote = new GlobalQuote();
@@ -99,6 +100,7 @@ class MarketDataServiceTest {
     void testFetchAndAnalyze_ApiLimit() {
         String symbol = "IBM";
         when(config.getAlphavantageApiKey()).thenReturn("fake-key");
+        when(aiService.resolveCompanyToTicker(symbol)).thenReturn(symbol);
 
         when(restClient.get()).thenReturn(requestHeadersUriSpec);
         when(requestHeadersUriSpec.uri(any(Function.class))).thenReturn(requestHeadersUriSpec);

@@ -65,6 +65,48 @@ public class AiAnalysisService {
                 quote.getSymbol(), quote.getPrice());
     }
 
+    @CircuitBreaker(name = "geminiAi", fallbackMethod = "resolveCompanyToTickerFallback")
+    public String resolveCompanyToTicker(String query) {
+        log.info("Asking AI to resolve query '{}' to a stock ticker...", query);
+
+        String prompt = String.format(
+                "Identify the primary stock ticker symbol for: '%s'. Respond with EXACTLY and ONLY the uppercase ticker symbol (e.g., AAPL, V, MSFT). If it is already a ticker, return it uppercase. If it's not a publicly traded company, return UNKNOWN.",
+                query
+        );
+
+        var requestBody = Map.of(
+                "contents", List.of(Map.of("parts", List.of(Map.of("text", prompt))))
+        );
+
+        try {
+            Map response = restClient.post()
+                    .uri("/v1/models/gemini-2.5-flash:generateContent?key=" + config.getGoogleAiApiKey())
+                    .body(requestBody)
+                    .retrieve()
+                    .body(Map.class);
+
+            String resolved = extractTextFromResponse(response).trim().toUpperCase();
+            // Clean up any potential markdown or extra chars returned by the LLM
+            resolved = resolved.replaceAll("[^A-Z]", "");
+            
+            if (resolved.isEmpty()) return "UNKNOWN";
+            return resolved;
+
+        } catch (HttpStatusCodeException e) {
+            log.warn("Gemini API call failed during ticker resolution: {}. Re-throwing.", e.getStatusCode());
+            throw e;
+        } catch (Exception e) {
+            log.error("Critical failure during ticker resolution.", e);
+            throw e;
+        }
+    }
+
+    public String resolveCompanyToTickerFallback(String query, Throwable t) {
+        log.warn("Circuit Breaker [geminiAi] active during resolution for '{}'. Defaulting to raw input.", query);
+        String fallback = query.toUpperCase().trim().replaceAll("[^A-Z]", "");
+        return fallback.isEmpty() ? "UNKNOWN" : fallback;
+    }
+
     @SuppressWarnings("unchecked")
     private String extractTextFromResponse(Map response) {
         try {
