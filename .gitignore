@@ -3,12 +3,11 @@
 # =========================================================================
 HELP.md
 target/
-!**/src/main/**/target/
-!**/src/test/**/target/
-
-# CRITICAL FIX: Do NOT ignore the maven wrapper jar!
-# The '!' ensures this binary stays tracked so ./mvnw works on clean clones.
-!.mvn/wrapper/maven-wrapper.jar
+bin/
+build/
+out/
+.mvn/wrapper/*.jar
+! .mvn/wrapper/maven-wrapper.jar
 
 # =========================================================================
 # Secrets & Configuration Guardrails (Protects API Keys)
@@ -25,6 +24,7 @@ application.properties
 # =========================================================================
 .vscode/
 *.code-workspace
+.history/
 
 # =========================================================================
 # IntelliJ IDEA
@@ -33,7 +33,6 @@ application.properties
 *.iws
 *.iml
 *.ipr
-out/
 
 # =========================================================================
 # STS / Eclipse
@@ -54,12 +53,26 @@ out/
 /dist/
 /nbdist/
 /.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
+
+# =========================================================================
+# Logs & Temporary Files
+# =========================================================================
+*.log
+logs/
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
 
 # =========================================================================
 # Operating System Garbage
 # =========================================================================
 .DS_Store
 Thumbs.db
+
+# =========================================================================
+# Miscellaneous
+# =========================================================================
+.mvn/wrapper/mavan-wrapper.properties
+docker-compose.override.yml
