@@ -1,0 +1,35 @@
+spring.application.name=cogniflow
+
+# CogniFlow Configuration
+# Replace with your real API keys
+cogniflow.alphavantage-api-key=YOUR_ALPHA_VANTAGE_KEY
+cogniflow.google-ai-api-key=YOUR_GEMINI_API_KEY
+cogniflow.tracked-tickers=IBM,AAPL,MSFT
+
+# Weaviate Configuration
+cogniflow.weaviate.host=localhost
+cogniflow.weaviate.port=8081
+cogniflow.weaviate.scheme=http
+
+# Logging
+logging.level.org.springframework.web.client.RestClient=DEBUG
+
+# Resilience4j Circuit Breakers
+resilience4j.circuitbreaker.configs.default.registerHealthIndicator=true
+resilience4j.circuitbreaker.configs.default.slidingWindowSize=10
+resilience4j.circuitbreaker.configs.default.minimumNumberOfCalls=5
+resilience4j.circuitbreaker.configs.default.permittedNumberOfCallsInHalfOpenState=3
+resilience4j.circuitbreaker.configs.default.waitDurationInOpenState=10s
+resilience4j.circuitbreaker.configs.default.failureRateThreshold=50
+
+resilience4j.circuitbreaker.instances.alphaVantage.baseConfig=default
+resilience4j.circuitbreaker.instances.geminiAi.baseConfig=default
+
+# Actuator Configuration
+management.endpoints.web.exposure.include=health,info,metrics,circuitbreakers
+management.endpoint.health.show-details=always
+
+# Swagger / OpenAPI Configuration
+springdoc.api-docs.path=/api-docs
+springdoc.swagger-ui.path=/swagger-ui.html
+springdoc.swagger-ui.operationsSorter=method
