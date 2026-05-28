@@ -4,7 +4,6 @@ import com.shr.cogniflow.config.CogniflowConfig;
 import com.shr.cogniflow.dto.GlobalQuote;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.web.client.RestClient;
@@ -16,7 +15,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class AiAnalysisServiceTest {
@@ -82,19 +80,17 @@ class AiAnalysisServiceTest {
     }
 
     @Test
-    void testAnalyzeMarketTrend_Failure() {
+    void testAnalyzeMarketTrend_Fallback_ManualTrigger() {
+        // Circuit Breaker logic usually requires AOP which isn't active in simple unit tests 
+        // without @SpringBootTest. Here we test the fallback logic directly.
         GlobalQuote quote = new GlobalQuote();
         quote.setSymbol("IBM");
-
-        when(config.getGoogleAiApiKey()).thenReturn("fake-key");
-
-        when(restClient.post()).thenReturn(requestBodyUriSpec);
-        when(requestBodyUriSpec.uri(anyString())).thenReturn(requestBodySpec);
-        when(requestBodySpec.body(any(Map.class))).thenReturn(requestBodySpec);
-        when(requestBodySpec.retrieve()).thenThrow(new RuntimeException("API Error"));
-
-        String result = aiAnalysisService.analyzeMarketTrend(quote);
-
-        assertEquals("Insight generation failed.", result);
+        quote.setPrice("150.00");
+        
+        String result = aiAnalysisService.analyzeMarketTrendFallback(quote, new RuntimeException("Simulated Failure"));
+        
+        assertTrue(result.contains("Fallback Insight"));
+        assertTrue(result.contains("IBM"));
+        assertTrue(result.contains("150.00"));
     }
 }

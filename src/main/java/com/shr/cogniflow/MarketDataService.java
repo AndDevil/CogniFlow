@@ -7,6 +7,7 @@ import com.shr.cogniflow.dto.MarketDataResponse;
 import com.shr.cogniflow.service.AiAnalysisService;
 import com.shr.cogniflow.service.EmbeddingService;
 import com.shr.cogniflow.service.VectorStoreService;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -69,46 +70,51 @@ public class MarketDataService {
         log.info("--- Multi-Ticker Market Scan Batch Complete ---");
     }
 
+    @CircuitBreaker(name = "alphaVantage", fallbackMethod = "fetchAndAnalyzeFallback")
     public void fetchAndAnalyze(String symbol) {
         log.info("CogniFlow is pulling data for: {}", symbol);
 
-        try {
-            // 1. INGESTION: Fetch from Alpha Vantage
-            MarketDataResponse response = restClient.get()
-                    .uri(uriBuilder -> uriBuilder
-                            .path("/query")
-                            .queryParam("function", "GLOBAL_QUOTE")
-                            .queryParam("symbol", symbol)
-                            .queryParam("apikey", config.getAlphavantageApiKey())
-                            .build())
-                    .retrieve()
-                    .body(MarketDataResponse.class);
+        // 1. INGESTION: Fetch from Alpha Vantage
+        MarketDataResponse response = restClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/query")
+                        .queryParam("function", "GLOBAL_QUOTE")
+                        .queryParam("symbol", symbol)
+                        .queryParam("apikey", config.getAlphavantageApiKey())
+                        .build())
+                .retrieve()
+                .body(MarketDataResponse.class);
 
-            if (response != null && response.getGlobalQuote() != null && response.getGlobalQuote().getPrice() != null) {
-                String price = response.getGlobalQuote().getPrice();
-                log.info("Success! Current Price for {}: {}", symbol, price);
+        if (response != null && response.getGlobalQuote() != null && response.getGlobalQuote().getPrice() != null) {
+            String price = response.getGlobalQuote().getPrice();
+            log.info("Success! Current Price for {}: {}", symbol, price);
 
-                // 2. INTELLIGENCE: Get AI Sentiment Analysis
-                String rawAiInsight = aiService.analyzeMarketTrend(response.getGlobalQuote());
-                String cleanInsight = extractTextFromResponse(rawAiInsight);
+            // 2. INTELLIGENCE: Get AI Sentiment Analysis
+            String rawAiInsight = aiService.analyzeMarketTrend(response.getGlobalQuote());
+            String cleanInsight = extractTextFromResponse(rawAiInsight);
 
-                // 3. SMART ENCODING: Convert text to mathematical Vector
-                float[] vector = embeddingService.getEmbedding(cleanInsight);
+            // 3. SMART ENCODING: Convert text to mathematical Vector
+            float[] vector = embeddingService.getEmbedding(cleanInsight);
 
-                // 4. PERSISTENCE: Save to Long-Term Memory (Weaviate)
-                if (vector != null) {
-                    vectorStoreService.storeInsight(symbol, price, cleanInsight, vector);
-                    log.info("Pipeline Step Complete: Smart Insight for {} saved.", symbol);
-                } else {
-                    log.error("Failed to generate vector for {}. Storage aborted.", symbol);
-                }
-
+            // 4. PERSISTENCE: Save to Long-Term Memory (Weaviate)
+            if (vector != null) {
+                vectorStoreService.storeInsight(symbol, price, cleanInsight, vector);
+                log.info("Pipeline Step Complete: Smart Insight for {} saved.", symbol);
             } else {
-                log.warn("API limit hit, invalid symbol, or empty response for ticker: {}", symbol);
+                log.error("Failed to generate vector for {}. Storage aborted.", symbol);
             }
-        } catch (Exception e) {
-            log.error("Pipeline failure on ticker " + symbol, e);
+
+        } else {
+            log.warn("API limit hit, invalid symbol, or empty response for ticker: {}", symbol);
         }
+    }
+
+    /**
+     * Fallback for Alpha Vantage ingestion failures.
+     */
+    public void fetchAndAnalyzeFallback(String symbol, Throwable t) {
+        log.warn("Circuit Breaker [alphaVantage] activated for {}. Reason: {}", symbol, t.getMessage());
+        log.info("Ingestion for {} skipped due to upstream failure or circuit protection.", symbol);
     }
 
     private String extractTextFromResponse(String rawJson) {

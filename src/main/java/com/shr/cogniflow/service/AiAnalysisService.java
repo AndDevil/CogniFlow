@@ -2,6 +2,7 @@ package com.shr.cogniflow.service;
 
 import com.shr.cogniflow.config.CogniflowConfig;
 import com.shr.cogniflow.dto.GlobalQuote;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
@@ -22,6 +23,7 @@ public class AiAnalysisService {
         this.config = config;
     }
 
+    @CircuitBreaker(name = "geminiAi", fallbackMethod = "analyzeMarketTrendFallback")
     public String analyzeMarketTrend(GlobalQuote quote) {
         log.info("Asking AI for a vibe check on {}...", quote.getSymbol());
 
@@ -46,17 +48,21 @@ public class AiAnalysisService {
             return extractTextFromResponse(response);
 
         } catch (HttpStatusCodeException e) {
-            if (e.getStatusCode().value() == 404) {
-                log.warn("Gemini API endpoint not found (Status: 404). Check the API URL and model name.");
-                return "AI analysis is currently unavailable due to a configuration issue.";
-            }
-            log.warn("Gemini API overloaded (Status: {}). Providing fallback analysis.", e.getStatusCode());
-            return String.format("Fallback Insight: The asset %s is currently trading at $%s with a daily shift of %s. Advanced AI analysis is temporarily unavailable due to upstream network congestion.",
-                    quote.getSymbol(), quote.getPrice(), quote.getChangePercent());
+            log.warn("Gemini API call failed with status: {}. Re-throwing for circuit breaker.", e.getStatusCode());
+            throw e;
         } catch (Exception e) {
-            log.error("Critical failure during AI text generation.", e);
-            return "Insight generation failed.";
+            log.error("Critical failure during AI text generation. Re-throwing for circuit breaker.", e);
+            throw e;
         }
+    }
+
+    /**
+     * Fallback method for analyzeMarketTrend when Gemini API fails or the circuit is open.
+     */
+    public String analyzeMarketTrendFallback(GlobalQuote quote, Throwable t) {
+        log.warn("Circuit Breaker [geminiAi] activated for {}. Reason: {}", quote.getSymbol(), t.getMessage());
+        return String.format("Fallback Insight: The asset %s is currently trading at $%s. Advanced AI analysis is temporarily unavailable (Circuit Breaker active).",
+                quote.getSymbol(), quote.getPrice());
     }
 
     @SuppressWarnings("unchecked")
