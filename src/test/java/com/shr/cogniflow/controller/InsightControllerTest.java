@@ -30,6 +30,40 @@ class InsightControllerTest {
     @MockitoBean
     private VectorStoreService vectorStoreService;
 
+    @MockitoBean
+    private com.shr.cogniflow.MarketDataService marketDataService;
+
+    @Test
+    void testGetLiveInsight_Success() throws Exception {
+        String symbol = "TSLA";
+        Map<String, Object> mockResult = Map.of(
+                "symbol", symbol,
+                "price", "200.00",
+                "insight", "Stable growth",
+                "timestamp", 1684435200000L
+        );
+
+        when(marketDataService.fetchAndAnalyze(symbol)).thenReturn(mockResult);
+
+        mockMvc.perform(get("/api/insights/live/" + symbol))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.symbol").value(symbol))
+                .andExpect(jsonPath("$.price").value("200.00"))
+                .andExpect(jsonPath("$.timestamp").exists());
+    }
+
+    @Test
+    void testGetLiveInsight_Failure() throws Exception {
+        String symbol = "INVALID";
+        Map<String, Object> mockResult = Map.of("error", "Invalid symbol");
+
+        when(marketDataService.fetchAndAnalyze(symbol)).thenReturn(mockResult);
+
+        mockMvc.perform(get("/api/insights/live/" + symbol))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.error").value("Invalid symbol"));
+    }
+
     @Test
     void testSearchInsights_Success() throws Exception {
         String query = "market trend";

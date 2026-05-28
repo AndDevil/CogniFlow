@@ -6,6 +6,7 @@ import com.shr.cogniflow.config.CogniflowConfig;
 import com.shr.cogniflow.dto.MarketDataResponse;
 import com.shr.cogniflow.service.AiAnalysisService;
 import com.shr.cogniflow.service.EmbeddingService;
+import com.shr.cogniflow.service.TickerService;
 import com.shr.cogniflow.service.VectorStoreService;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Slf4j
@@ -25,19 +27,22 @@ public class MarketDataService {
     private final EmbeddingService embeddingService;
     private final ObjectMapper objectMapper;
     private final CogniflowConfig config;
+    private final TickerService tickerService;
 
     public MarketDataService(RestClient.Builder builder,
                              AiAnalysisService aiService,
                              VectorStoreService vectorStoreService,
                              EmbeddingService embeddingService,
                              ObjectMapper objectMapper,
-                             CogniflowConfig config) {
+                             CogniflowConfig config,
+                             TickerService tickerService) {
         this.restClient = builder.baseUrl("https://www.alphavantage.co").build();
         this.aiService = aiService;
         this.vectorStoreService = vectorStoreService;
         this.embeddingService = embeddingService;
         this.objectMapper = objectMapper;
         this.config = config;
+        this.tickerService = tickerService;
 
         String apiKey = config.getAlphavantageApiKey();
         if (apiKey == null || apiKey.isEmpty() || "your_default_api_key".equals(apiKey)) {
@@ -53,7 +58,7 @@ public class MarketDataService {
     public void fetchAndAnalyzeScheduled() {
         log.info("--- Scheduled Pulse: Starting Multi-Ticker Market Scan ---");
 
-        List<String> tickers = config.getTrackedTickers();
+        List<String> tickers = tickerService.getTickers();
         for (String symbol : tickers) {
             fetchAndAnalyze(symbol);
 
@@ -71,8 +76,8 @@ public class MarketDataService {
     }
 
     @CircuitBreaker(name = "alphaVantage", fallbackMethod = "fetchAndAnalyzeFallback")
-    public void fetchAndAnalyze(String symbol) {
-        log.info("CogniFlow is pulling data for: {}", symbol);
+    public Map<String, Object> fetchAndAnalyze(String symbol) {
+        log.info("CogniFlow is pulling live data for: {}", symbol);
 
         // 1. INGESTION: Fetch from Alpha Vantage
         MarketDataResponse response = restClient.get()
@@ -104,17 +109,29 @@ public class MarketDataService {
                 log.error("Failed to generate vector for {}. Storage aborted.", symbol);
             }
 
+            return Map.of(
+                    "symbol", symbol,
+                    "price", price,
+                    "insight", cleanInsight,
+                    "timestamp", System.currentTimeMillis()
+            );
+
         } else {
             log.warn("API limit hit, invalid symbol, or empty response for ticker: {}", symbol);
+            return Map.of("error", "Data unavailable or limit reached for symbol: " + symbol);
         }
     }
 
     /**
      * Fallback for Alpha Vantage ingestion failures.
      */
-    public void fetchAndAnalyzeFallback(String symbol, Throwable t) {
+    public Map<String, Object> fetchAndAnalyzeFallback(String symbol, Throwable t) {
         log.warn("Circuit Breaker [alphaVantage] activated for {}. Reason: {}", symbol, t.getMessage());
-        log.info("Ingestion for {} skipped due to upstream failure or circuit protection.", symbol);
+        return Map.of(
+                "symbol", symbol,
+                "error", "Live search temporarily unavailable (Circuit Breaker active)",
+                "reason", t.getMessage()
+        );
     }
 
     private String extractTextFromResponse(String rawJson) {

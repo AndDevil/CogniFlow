@@ -1,14 +1,12 @@
 package com.shr.cogniflow.controller;
 
+import com.shr.cogniflow.MarketDataService;
 import com.shr.cogniflow.service.EmbeddingService;
 import com.shr.cogniflow.service.VectorStoreService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
 import java.time.ZoneId;
@@ -26,11 +24,34 @@ public class InsightController {
 
     private final EmbeddingService embeddingService;
     private final VectorStoreService vectorStoreService;
+    private final MarketDataService marketDataService;
 
     // ISO formatter for human readability (e.g., 2026-05-18 06:58:58)
     private static final DateTimeFormatter ISO_FORMATTER =
             DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")
                     .withZone(ZoneId.systemDefault());
+
+    /**
+     * Live on-demand analysis for ANY stock symbol.
+     * This triggers the full pipeline: Fetch -> AI Analysis -> Vector Store.
+     */
+    @GetMapping("/live/{symbol}")
+    public ResponseEntity<Map<String, Object>> getLiveInsight(@PathVariable String symbol) {
+        log.info("REST request for live on-demand analysis of symbol: {}", symbol);
+        Map<String, Object> result = marketDataService.fetchAndAnalyze(symbol);
+
+        if (result.containsKey("error")) {
+            return ResponseEntity.status(503).body(result);
+        }
+
+        // Format timestamp for consistency
+        Map<String, Object> formattedResult = new LinkedHashMap<>(result);
+        if (formattedResult.containsKey("timestamp")) {
+            formattedResult.put("timestamp", ISO_FORMATTER.format(Instant.ofEpochMilli((Long) result.get("timestamp"))));
+        }
+
+        return ResponseEntity.ok(formattedResult);
+    }
 
     @GetMapping("/search")
     public ResponseEntity<List<Map<String, Object>>> searchInsights(

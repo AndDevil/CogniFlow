@@ -6,6 +6,7 @@ import com.shr.cogniflow.dto.GlobalQuote;
 import com.shr.cogniflow.dto.MarketDataResponse;
 import com.shr.cogniflow.service.AiAnalysisService;
 import com.shr.cogniflow.service.EmbeddingService;
+import com.shr.cogniflow.service.TickerService;
 import com.shr.cogniflow.service.VectorStoreService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -49,6 +50,9 @@ class MarketDataServiceTest {
     @Mock
     private CogniflowConfig config;
 
+    @Mock
+    private TickerService tickerService;
+
     private MarketDataService marketDataService;
 
     @BeforeEach
@@ -63,7 +67,8 @@ class MarketDataServiceTest {
                 vectorStoreService,
                 embeddingService,
                 objectMapper,
-                config
+                config,
+                tickerService
         );
     }
 
@@ -103,5 +108,21 @@ class MarketDataServiceTest {
         marketDataService.fetchAndAnalyze(symbol);
 
         verify(vectorStoreService, never()).storeInsight(anyString(), anyString(), anyString(), any());
+    }
+
+    @Test
+    void testFetchAndAnalyzeScheduled() {
+        when(tickerService.getTickers()).thenReturn(List.of("IBM", "AAPL"));
+        when(config.getAlphavantageApiKey()).thenReturn("fake-key");
+        
+        // Mock API chain for success to avoid errors in logs/execution
+        when(restClient.get()).thenReturn(requestHeadersUriSpec);
+        when(requestHeadersUriSpec.uri(any(Function.class))).thenReturn(requestHeadersUriSpec);
+        when(requestHeadersUriSpec.retrieve()).thenReturn(responseSpec);
+        when(responseSpec.body(MarketDataResponse.class)).thenReturn(null);
+
+        marketDataService.fetchAndAnalyzeScheduled();
+
+        verify(tickerService, times(1)).getTickers();
     }
 }
