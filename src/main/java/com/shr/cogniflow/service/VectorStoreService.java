@@ -2,6 +2,7 @@ package com.shr.cogniflow.service;
 
 import com.shr.cogniflow.config.CogniflowConfig;
 import io.weaviate.client.Config;
+import io.weaviate.client.WeaviateAuthClient;
 import io.weaviate.client.WeaviateClient;
 import io.weaviate.client.base.Result;
 import io.weaviate.client.v1.data.model.WeaviateObject;
@@ -37,11 +38,29 @@ public class VectorStoreService {
     @PostConstruct
     public void init() {
         CogniflowConfig.Weaviate wv = config.getWeaviate();
-        Config weaviateConfig = new Config(wv.getScheme(), wv.getHost() + ":" + wv.getPort());
-        this.client = new WeaviateClient(weaviateConfig);
+        
+        // Handle standard ports cleanly for WCS (which usually uses HTTPS and 443)
+        String hostPort = wv.getPort() == 80 || wv.getPort() == 443 
+                          ? wv.getHost() 
+                          : wv.getHost() + ":" + wv.getPort();
+                          
+        Config weaviateConfig = new Config(wv.getScheme(), hostPort);
 
-        log.info("Checking Weaviate for '{}' schema at {}://{}:{}...", 
-                CLASS_NAME, wv.getScheme(), wv.getHost(), wv.getPort());
+        try {
+            if (wv.getApiKey() != null && !wv.getApiKey().isEmpty()) {
+                log.info("Connecting to Weaviate with API Key Authentication (WCS mode).");
+                this.client = WeaviateAuthClient.apiKey(weaviateConfig, wv.getApiKey());
+            } else {
+                log.info("Connecting to Weaviate without authentication (Local mode).");
+                this.client = new WeaviateClient(weaviateConfig);
+            }
+        } catch (Exception e) {
+            log.error("Failed to initialize Weaviate client", e);
+            return;
+        }
+
+        log.info("Checking Weaviate for '{}' schema at {}://{}...", 
+                CLASS_NAME, wv.getScheme(), hostPort);
 
         Result<Boolean> check = client.schema().exists().withClassName(CLASS_NAME).run();
 

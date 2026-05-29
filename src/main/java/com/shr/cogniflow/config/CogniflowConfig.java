@@ -41,5 +41,6 @@ public class CogniflowConfig {
         private String host = "localhost";
         private int port = 8081;
         private String scheme = "http";
+        private String apiKey = ""; // API Key for Weaviate Cloud (WCS)
     }
 }
