@@ -27,6 +27,11 @@ public class CogniflowConfig {
     private List<String> trackedTickers = List.of("IBM", "AAPL", "MSFT");
 
     /**
+     * Secret token used to authorize incoming requests from Google Cloud Scheduler.
+     */
+    private String jobSecret;
+
+    /**
      * Weaviate configuration.
      */
     private Weaviate weaviate = new Weaviate();

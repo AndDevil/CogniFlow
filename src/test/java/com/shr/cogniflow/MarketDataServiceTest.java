@@ -113,7 +113,7 @@ class MarketDataServiceTest {
     }
 
     @Test
-    void testFetchAndAnalyzeScheduled() {
+    void testExecuteMarketScanBatch() {
         when(tickerService.getTickers()).thenReturn(List.of("IBM", "AAPL"));
         when(config.getAlphavantageApiKey()).thenReturn("fake-key");
         
@@ -123,7 +123,7 @@ class MarketDataServiceTest {
         when(requestHeadersUriSpec.retrieve()).thenReturn(responseSpec);
         when(responseSpec.body(MarketDataResponse.class)).thenReturn(null);
 
-        marketDataService.fetchAndAnalyzeScheduled();
+        marketDataService.executeMarketScanBatch();
 
         verify(tickerService, times(1)).getTickers();
     }

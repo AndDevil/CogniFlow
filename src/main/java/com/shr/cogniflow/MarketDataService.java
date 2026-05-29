@@ -10,7 +10,6 @@ import com.shr.cogniflow.service.TickerService;
 import com.shr.cogniflow.service.VectorStoreService;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
@@ -51,12 +50,12 @@ public class MarketDataService {
     }
 
     /**
-     * Runs once every 3 hours (10,800,000 ms).
-     * Staying safely under Alpha Vantage's strict free-tier limits.
+     * Executes the multi-ticker market scan.
+     * In a serverless environment (like Cloud Run), this is triggered via a secured REST endpoint
+     * rather than an internal timer to allow the container to scale to zero.
      */
-    @Scheduled(fixedRate = 10800000, initialDelay = 120000)
-    public void fetchAndAnalyzeScheduled() {
-        log.info("--- Scheduled Pulse: Starting Multi-Ticker Market Scan ---");
+    public void executeMarketScanBatch() {
+        log.info("--- Authorized Batch Pulse: Starting Multi-Ticker Market Scan ---");
 
         List<String> tickers = tickerService.getTickers();
         for (String symbol : tickers) {

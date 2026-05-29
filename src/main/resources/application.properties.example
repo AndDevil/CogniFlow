@@ -4,6 +4,7 @@ spring.application.name=cogniflow
 # Replace with your real API keys
 cogniflow.alphavantage-api-key=YOUR_ALPHA_VANTAGE_KEY
 cogniflow.google-ai-api-key=YOUR_GEMINI_API_KEY
+cogniflow.job-secret=YOUR_CRON_JOB_SECRET_TOKEN
 cogniflow.tracked-tickers=IBM,AAPL,MSFT
 
 # Weaviate Configuration
