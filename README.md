@@ -38,8 +38,9 @@ CogniFlow automatically fetches market data for curated tickers, analyzes the tr
 Create or update your `src/main/resources/application.properties` (or set environment variables):
 
 ```properties
-alphavantage.api.key=YOUR_ALPHA_VANTAGE_KEY
-google.ai.api.key=YOUR_GEMINI_API_KEY
+cogniflow.alphavantage-api-key=YOUR_ALPHA_VANTAGE_KEY
+cogniflow.google-ai-api-key=YOUR_GEMINI_API_KEY
+cogniflow.job-secret=YOUR_CRON_JOB_SECRET_TOKEN
 ```
 
 ### Running the Application
@@ -59,6 +60,7 @@ google.ai.api.key=YOUR_GEMINI_API_KEY
 
 - **Semantic Search:** Query the system using natural language to find similar market trends and insights.
 - **Market Scans:** The system automatically performs a scan every few hours (configurable in `MarketDataService`).
+- **Internal Trigger:** Manually trigger a market scan via POST to `/api/internal/run-scan`. This requires the `X-CloudScheduler-JobSecret` header to match the configured `cogniflow.job-secret`.
 
 ## 🛡 License
 
