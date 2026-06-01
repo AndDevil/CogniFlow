@@ -39,6 +39,9 @@ public class EmbeddingService {
                     .uri("/v1/models/gemini-embedding-001:embedContent?key=" + apiKey)
                     .body(requestBody)
                     .retrieve()
+                    .onStatus(status -> status.is4xxClientError() || status.is5xxServerError(), (request, responseBody) -> {
+                        log.error("Gemini API Error: Status {}, Body: {}", responseBody.getStatusCode(), new String(responseBody.getBody().readAllBytes()));
+                    })
                     .body(Map.class);
 
             if (response != null && response.containsKey("embedding")) {

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CogniFlow // Market Intelligence</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%2310b981%22/></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -286,6 +287,13 @@
         try {
             const response = await fetch(`/api/insights/search?query=${encodeURIComponent(queryInput)}&limit=6`);
             const data = await response.json();
+
+            if (!response.ok) {
+                resultsGrid.innerHTML = `<div class="col-span-full border border-red-900/30 bg-red-950/20 text-red-400 rounded-xl p-8 text-center text-sm font-mono">Search Failed: ${data.error || 'Unknown Error'}</div>`;
+                resultCount.innerText = `Error`;
+                return;
+            }
+
             resultCount.innerText = `${data.length} records fetched`;
 
             if (data.length === 0) {

@@ -55,7 +55,7 @@ public class InsightController {
 
     @Operation(summary = "Search historical insights", description = "Performs semantic vector search across all stored AI insights")
     @GetMapping("/search")
-    public ResponseEntity<List<Map<String, Object>>> searchInsights(
+    public ResponseEntity<Object> searchInsights(
             @Parameter(description = "Natural language query (e.g., 'bullish tech stocks')") @RequestParam String query,
             @Parameter(description = "Maximum number of results to return") @RequestParam(defaultValue = "3") int limit) {
 
@@ -64,7 +64,7 @@ public class InsightController {
         float[] queryVector = embeddingService.getEmbedding(query);
         if (queryVector == null) {
             log.warn("Vector search aborted: Embedding generation failed for query '{}'", query);
-            return ResponseEntity.status(500).body(new ArrayList<>()); 
+            return ResponseEntity.status(500).body(Map.of("error", "AI Embedding service failed. Check API keys and quotas.")); 
         }
 
         List<Map<String, Object>> rawResults = vectorStoreService.semanticSearch(queryVector, limit);
