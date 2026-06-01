@@ -35,3 +35,7 @@ management.endpoint.health.show-details=always
 springdoc.api-docs.path=/api-docs
 springdoc.swagger-ui.path=/swagger-ui.html
 springdoc.swagger-ui.operationsSorter=method
+
+# Global HTTP Client Timeouts (Spring Boot 3.2+)
+spring.http.client.connect-timeout=5s
+spring.http.client.read-timeout=10s

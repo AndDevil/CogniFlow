@@ -22,12 +22,17 @@ public class EmbeddingService {
     public float[] getEmbedding(String text) {
         log.info("Generating stable text embedding using gemini-embedding-001...");
 
+        String apiKey = config.getGoogleAiApiKey();
+        if (apiKey == null || apiKey.isEmpty() || "YOUR_GEMINI_API_KEY".equals(apiKey)) {
+            log.error("Google AI API Key is missing or using default placeholder. Please check 'cogniflow.google-ai-api-key'.");
+            return null;
+        }
+
         var requestBody = Map.of(
                 "model", "models/gemini-embedding-001",
+                "task_type", "RETRIEVAL_QUERY",
                 "content", Map.of("parts", List.of(Map.of("text", text)))
         );
-
-        String apiKey = config.getGoogleAiApiKey();
 
         try {
             Map response = restClient.post()
@@ -40,15 +45,22 @@ public class EmbeddingService {
                 Map embeddingMap = (Map) response.get("embedding");
                 List<Number> values = (List<Number>) embeddingMap.get("values");
 
+                if (values == null) {
+                    log.error("Embedding response received but 'values' is null.");
+                    return null;
+                }
+
                 float[] vector = new float[values.size()];
                 for (int i = 0; i < values.size(); i++) {
                     vector[i] = values.get(i).floatValue();
                 }
                 return vector;
+            } else {
+                log.error("Embedding API returned unexpected response format: {}", response);
+                return null;
             }
-            return null;
         } catch (Exception e) {
-            log.error("Stable embedding generation failed.", e);
+            log.error("Stable embedding generation failed due to an exception.", e);
             return null;
         }
     }

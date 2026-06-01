@@ -63,7 +63,8 @@ public class InsightController {
 
         float[] queryVector = embeddingService.getEmbedding(query);
         if (queryVector == null) {
-            return ResponseEntity.internalServerError().build();
+            log.warn("Vector search aborted: Embedding generation failed for query '{}'", query);
+            return ResponseEntity.status(500).body(new ArrayList<>()); 
         }
 
         List<Map<String, Object>> rawResults = vectorStoreService.semanticSearch(queryVector, limit);
