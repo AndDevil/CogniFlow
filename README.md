@@ -41,6 +41,12 @@ Create or update your `src/main/resources/application.properties` (or set enviro
 cogniflow.alphavantage-api-key=YOUR_ALPHA_VANTAGE_KEY
 cogniflow.google-ai-api-key=YOUR_GEMINI_API_KEY
 cogniflow.job-secret=YOUR_CRON_JOB_SECRET_TOKEN
+
+# Weaviate Configuration (Defaults for local Docker)
+cogniflow.weaviate.host=localhost
+cogniflow.weaviate.port=8081
+cogniflow.weaviate.scheme=http
+# cogniflow.weaviate.api-key=YOUR_WCS_API_KEY (Optional for Weaviate Cloud)
 ```
 
 ### Running the Application
