@@ -42,6 +42,9 @@ public class InsightController {
         Map<String, Object> result = marketDataService.fetchAndAnalyze(symbol);
 
         if (result.containsKey("error")) {
+            if ("UNKNOWN_TICKER".equals(result.get("errorCode"))) {
+                return ResponseEntity.status(404).body(result);
+            }
             return ResponseEntity.status(503).body(result);
         }
 

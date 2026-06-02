@@ -82,7 +82,10 @@ public class MarketDataService {
         String symbol = aiService.resolveCompanyToTicker(query);
         if ("UNKNOWN".equals(symbol)) {
             log.warn("Could not resolve '{}' to a valid publicly traded ticker.", query);
-            return Map.of("error", "Could not resolve '" + query + "' to a valid publicly traded ticker symbol.");
+            return Map.of(
+                "error", "Could not resolve '" + query + "' to a valid publicly traded ticker symbol.",
+                "errorCode", "UNKNOWN_TICKER"
+            );
         }
         
         log.info("Resolved query '{}' to ticker '{}'", query, symbol);
@@ -138,6 +141,7 @@ public class MarketDataService {
         return Map.of(
                 "symbol", symbol,
                 "error", "Live search temporarily unavailable (Circuit Breaker active)",
+                "errorCode", "SERVICE_UNAVAILABLE",
                 "reason", t.getMessage()
         );
     }
