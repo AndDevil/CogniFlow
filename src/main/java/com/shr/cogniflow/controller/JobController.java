@@ -2,15 +2,13 @@ package com.shr.cogniflow.controller;
 
 import com.shr.cogniflow.MarketDataService;
 import com.shr.cogniflow.config.CogniflowConfig;
+import com.shr.cogniflow.service.VectorStoreService;
 import io.swagger.v3.oas.annotations.Hidden;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/internal")
@@ -20,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class JobController {
 
     private final MarketDataService marketDataService;
+    private final VectorStoreService vectorStoreService;
     private final CogniflowConfig config;
 
     @PostMapping("/run-scan")
@@ -40,9 +39,6 @@ public class JobController {
 
         log.info("Authorized trigger received. Delegating to MarketDataService...");
         
-        // In a real production system, you might want to run this asynchronously
-        // so the Cloud Scheduler doesn't timeout waiting for the HTTP response.
-        // For this prototype, we'll run it synchronously.
         try {
             marketDataService.executeMarketScanBatch();
             return ResponseEntity.ok("Batch scan completed successfully.");
@@ -50,5 +46,14 @@ public class JobController {
             log.error("Batch scan failed during execution.", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Batch scan failed.");
         }
+    }
+
+    @GetMapping("/weaviate-check")
+    public ResponseEntity<String> checkWeaviateConnection() {
+        var result = vectorStoreService.checkConnection();
+        if (result.hasErrors()) {
+            return ResponseEntity.status(500).body("Connection failed: " + result.getError().getMessages());
+        }
+        return ResponseEntity.ok("Weaviate connection is alive and kicking! Status: " + result.getResult());
     }
 }

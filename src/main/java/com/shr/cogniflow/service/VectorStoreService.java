@@ -39,12 +39,21 @@ public class VectorStoreService {
     public void init() {
         CogniflowConfig.Weaviate wv = config.getWeaviate();
         
+        // Seprate scheme and host clearly to avoid connection traps
+        String scheme = wv.getScheme();
+        String host = wv.getHost();
+        
+        // Clean the host if someone accidentally included the scheme in the host field
+        if (host.contains("://")) {
+            host = host.split("://")[1];
+        }
+
         // Handle standard ports cleanly for WCS (which usually uses HTTPS and 443)
         String hostPort = wv.getPort() == 80 || wv.getPort() == 443 
-                          ? wv.getHost() 
-                          : wv.getHost() + ":" + wv.getPort();
+                          ? host 
+                          : host + ":" + wv.getPort();
                           
-        Config weaviateConfig = new Config(wv.getScheme(), hostPort);
+        Config weaviateConfig = new Config(scheme, hostPort);
 
         try {
             if (wv.getApiKey() != null && !wv.getApiKey().isEmpty()) {
@@ -60,12 +69,13 @@ public class VectorStoreService {
         }
 
         log.info("Checking Weaviate for '{}' schema at {}://{}...", 
-                CLASS_NAME, wv.getScheme(), hostPort);
+                CLASS_NAME, scheme, hostPort);
 
         Result<Boolean> check = client.schema().exists().withClassName(CLASS_NAME).run();
 
         if (check.hasErrors()) {
-            log.error("Error checking schema: {}", check.getError().getMessages());
+            log.error("Error checking schema: {}. Hint: If on Cloud Run, ensure HTTP/2 is enabled for gRPC traffic.", 
+                    check.getError().getMessages());
             return;
         }
 
@@ -87,6 +97,11 @@ public class VectorStoreService {
                 log.info("Successfully created '{}' schema in Weaviate.", CLASS_NAME);
             }
         }
+    }
+
+    public Result<Boolean> checkConnection() {
+        log.info("Executing manual readiness check against Weaviate cluster...");
+        return client.misc().readyChecker().run();
     }
 
     public void storeInsight(String symbol, String price, String insight, float[] vector) {
