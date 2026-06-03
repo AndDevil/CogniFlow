@@ -93,10 +93,13 @@ class InsightControllerTest {
 
     @Test
     void testSearchInsights_InternalServerError() throws Exception {
-        when(embeddingService.getEmbedding(anyString())).thenReturn(null);
+        when(embeddingService.getEmbedding(anyString()))
+                .thenThrow(new RuntimeException("Failure connecting to generativelanguage.googleapis.com"));
 
         mockMvc.perform(get("/api/insights/search")
                 .param("query", "fail"))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.errorCode").value("GEMINI_API_ERROR"))
+                .andExpect(jsonPath("$.message").value("Failure connecting to generativelanguage.googleapis.com"));
     }
 }

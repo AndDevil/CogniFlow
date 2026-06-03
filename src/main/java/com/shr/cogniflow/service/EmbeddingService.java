@@ -24,8 +24,7 @@ public class EmbeddingService {
 
         String apiKey = config.getGoogleAiApiKey();
         if (apiKey == null || apiKey.isEmpty() || "YOUR_GEMINI_API_KEY".equals(apiKey)) {
-            log.error("Google AI API Key is missing or using default placeholder. Please check 'cogniflow.google-ai-api-key'.");
-            return null;
+            throw new RuntimeException("Google AI API Key is missing or using default placeholder. Please check 'COGNIFLOW_GOOGLE_AI_API_KEY' environment variable.");
         }
 
         var requestBody = Map.of(
@@ -40,7 +39,9 @@ public class EmbeddingService {
                     .body(requestBody)
                     .retrieve()
                     .onStatus(status -> status.is4xxClientError() || status.is5xxServerError(), (request, responseBody) -> {
-                        log.error("Gemini API Error: Status {}, Body: {}", responseBody.getStatusCode(), new String(responseBody.getBody().readAllBytes()));
+                        String errorBody = new String(responseBody.getBody().readAllBytes());
+                        log.error("Gemini API Error: Status {}, Body: {}", responseBody.getStatusCode(), errorBody);
+                        throw new RuntimeException("Gemini API Error: " + responseBody.getStatusCode() + " - " + errorBody);
                     })
                     .body(Map.class);
 
@@ -49,8 +50,7 @@ public class EmbeddingService {
                 List<Number> values = (List<Number>) embeddingMap.get("values");
 
                 if (values == null) {
-                    log.error("Embedding response received but 'values' is null.");
-                    return null;
+                    throw new RuntimeException("Embedding response received but 'values' is null.");
                 }
 
                 float[] vector = new float[values.size()];
@@ -59,12 +59,13 @@ public class EmbeddingService {
                 }
                 return vector;
             } else {
-                log.error("Embedding API returned unexpected response format: {}", response);
-                return null;
+                throw new RuntimeException("Embedding API returned unexpected response format.");
             }
+        } catch (RuntimeException e) {
+            throw e; // Pass through our custom error messages
         } catch (Exception e) {
             log.error("Stable embedding generation failed due to an exception.", e);
-            return null;
+            throw new RuntimeException("Unexpected error during embedding: " + e.getMessage());
         }
     }
 }
