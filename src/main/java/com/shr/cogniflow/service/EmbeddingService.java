@@ -31,6 +31,12 @@ public class EmbeddingService {
             throw new IllegalStateException("AI Embedding service failed: Missing API Key configuration.");
         }
 
+        // Diagnostic: Log masked key to verify source (Env vs Property)
+        String maskedKey = apiKey.length() > 8 
+                ? apiKey.substring(0, 4) + "...." + apiKey.substring(apiKey.length() - 4)
+                : "****";
+        log.info("Using Gemini API Key: {}", maskedKey);
+
         var requestBody = Map.of(
                 "model", "models/gemini-embedding-001",
                 "task_type", "RETRIEVAL_QUERY",
