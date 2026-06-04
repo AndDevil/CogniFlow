@@ -1,0 +1,19 @@
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 50
+        # 1. Wait 30s before attempting recovery
+        waitDurationInOpenState: 30s
+        # 2. Allow 3 trial calls when in Half-Open state
+        permittedNumberOfCallsInHalfOpenState: 3
+        # 3. Automatically transition to Half-Open once wait duration passes
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+    instances:
+      geminiAi:
+        baseConfig: default
+      alphaVantage:
+        baseConfig: default

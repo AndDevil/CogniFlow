@@ -78,6 +78,12 @@ public class MarketDataService {
     public Map<String, Object> fetchAndAnalyze(String query) {
         log.info("CogniFlow is pulling live data for query: {}", query);
 
+        String avApiKey = config.getAlphavantageApiKey();
+        if (avApiKey == null || avApiKey.isEmpty() || "YOUR_ALPHA_VANTAGE_KEY".equals(avApiKey)) {
+            log.error("PRODUCTION ERROR: Alpha Vantage API Key is missing. Live checks will fail.");
+            throw new IllegalStateException("Market Data service failed: Missing API Key.");
+        }
+
         // 0. AI Name Resolution (e.g. "Visa" -> "V")
         String symbol = aiService.resolveCompanyToTicker(query);
         if ("UNKNOWN".equals(symbol)) {
@@ -96,7 +102,7 @@ public class MarketDataService {
                         .path("/query")
                         .queryParam("function", "GLOBAL_QUOTE")
                         .queryParam("symbol", symbol)
-                        .queryParam("apikey", config.getAlphavantageApiKey())
+                        .queryParam("apikey", avApiKey)
                         .build())
                 .retrieve()
                 .body(MarketDataResponse.class);

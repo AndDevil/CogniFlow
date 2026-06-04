@@ -27,6 +27,12 @@ public class AiAnalysisService {
     public String analyzeMarketTrend(GlobalQuote quote) {
         log.info("Asking AI for a vibe check on {}...", quote.getSymbol());
 
+        String apiKey = config.getGoogleAiApiKey();
+        if (apiKey == null || apiKey.isEmpty() || "YOUR_GEMINI_API_KEY".equals(apiKey)) {
+            log.error("PRODUCTION ERROR: Google AI API Key is missing for analysis. Circuit breaker will trip.");
+            throw new IllegalStateException("AI Analysis failed: Missing API Key.");
+        }
+
         String prompt = String.format(
                 "Analyze this asset: %s. Price: %s. Change: %s. Give a 2 sentence summary.",
                 quote.getSymbol(), quote.getPrice(), quote.getChangePercent()
@@ -35,8 +41,6 @@ public class AiAnalysisService {
         var requestBody = Map.of(
                 "contents", List.of(Map.of("parts", List.of(Map.of("text", prompt))))
         );
-
-        String apiKey = config.getGoogleAiApiKey();
 
         try {
             Map response = restClient.post()
@@ -69,6 +73,12 @@ public class AiAnalysisService {
     public String resolveCompanyToTicker(String query) {
         log.info("Asking AI to resolve query '{}' to a stock ticker...", query);
 
+        String apiKey = config.getGoogleAiApiKey();
+        if (apiKey == null || apiKey.isEmpty() || "YOUR_GEMINI_API_KEY".equals(apiKey)) {
+            log.error("PRODUCTION ERROR: Google AI API Key is missing for ticker resolution.");
+            throw new IllegalStateException("Ticker resolution failed: Missing API Key.");
+        }
+
         String prompt = String.format(
                 "Identify the primary stock ticker symbol for: '%s'. Respond with EXACTLY and ONLY the uppercase ticker symbol (e.g., AAPL, V, MSFT). If it is already a ticker, return it uppercase. If it's not a publicly traded company, return UNKNOWN.",
                 query
@@ -80,7 +90,7 @@ public class AiAnalysisService {
 
         try {
             Map response = restClient.post()
-                    .uri("/v1/models/gemini-2.5-flash:generateContent?key=" + config.getGoogleAiApiKey())
+                    .uri("/v1/models/gemini-2.5-flash:generateContent?key=" + apiKey)
                     .body(requestBody)
                     .retrieve()
                     .body(Map.class);

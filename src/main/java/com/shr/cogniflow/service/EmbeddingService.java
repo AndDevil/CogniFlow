@@ -23,8 +23,12 @@ public class EmbeddingService {
         log.info("Generating stable text embedding using gemini-embedding-001...");
 
         String apiKey = config.getGoogleAiApiKey();
+        
+        // Defensive check: API Key existence
         if (apiKey == null || apiKey.isEmpty() || "YOUR_GEMINI_API_KEY".equals(apiKey)) {
-            throw new RuntimeException("Google AI API Key is missing or using default placeholder. Please check 'COGNIFLOW_GOOGLE_AI_API_KEY' environment variable.");
+            log.error("PRODUCTION ERROR: Google AI API Key is missing. Search and embeddings will fail. " +
+                    "Ensure 'COGNIFLOW_GOOGLE_AI_API_KEY' is set in Cloud Run environment variables.");
+            throw new IllegalStateException("AI Embedding service failed: Missing API Key configuration.");
         }
 
         var requestBody = Map.of(
@@ -38,10 +42,14 @@ public class EmbeddingService {
                     .uri("/v1/models/gemini-embedding-001:embedContent?key=" + apiKey)
                     .body(requestBody)
                     .retrieve()
+                    .onStatus(status -> status.value() == 401 || status.value() == 403, (request, responseBody) -> {
+                        log.error("CRITICAL: API Key invalid or quota exceeded (401/403). check Google AI Console.");
+                        throw new RuntimeException("AI Embedding service failed: Invalid API Key or Quota exceeded.");
+                    })
                     .onStatus(status -> status.is4xxClientError() || status.is5xxServerError(), (request, responseBody) -> {
                         String errorBody = new String(responseBody.getBody().readAllBytes());
                         log.error("Gemini API Error: Status {}, Body: {}", responseBody.getStatusCode(), errorBody);
-                        throw new RuntimeException("Gemini API Error: " + responseBody.getStatusCode() + " - " + errorBody);
+                        throw new RuntimeException("Gemini API Error: " + responseBody.getStatusCode());
                     })
                     .body(Map.class);
 
@@ -50,6 +58,7 @@ public class EmbeddingService {
                 List<Number> values = (List<Number>) embeddingMap.get("values");
 
                 if (values == null) {
+                    log.error("Gemini API returned success but values were null.");
                     throw new RuntimeException("Embedding response received but 'values' is null.");
                 }
 
@@ -59,12 +68,15 @@ public class EmbeddingService {
                 }
                 return vector;
             } else {
+                log.error("Gemini API returned unexpected response format: {}", response);
                 throw new RuntimeException("Embedding API returned unexpected response format.");
             }
         } catch (RuntimeException e) {
-            throw e; // Pass through our custom error messages
+            // Log specifically if it's our own thrown exceptions
+            log.warn("Managed Embedding Failure: {}", e.getMessage());
+            throw e; 
         } catch (Exception e) {
-            log.error("Stable embedding generation failed due to an exception.", e);
+            log.error("UNEXPECTED ERROR: Stable embedding generation failed due to a low-level exception.", e);
             throw new RuntimeException("Unexpected error during embedding: " + e.getMessage());
         }
     }
