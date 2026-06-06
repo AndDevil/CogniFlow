@@ -53,11 +53,28 @@
                     onkeydown="if(event.key === 'Enter') executeSearch()"
             />
             <button
+                    id="searchButton"
                     onclick="executeSearch()"
-                    class="bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-sm px-5 py-2.5 rounded-lg transition-colors duration-150 flex-shrink-0"
+                    class="bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-sm px-5 py-2.5 rounded-lg transition-colors duration-150 flex-shrink-0 flex items-center justify-center space-x-2"
             >
-                Search Memory
+                <span id="searchButtonText">Search Memory</span>
             </button>
+        </div>
+
+        <div id="search-loading-text" class="hidden text-[10px] text-emerald-400 font-mono text-center animate-pulse">
+            ⚡ Interrogating vector clusters... Searching...
+        </div>
+
+        <!-- Search Error Banner -->
+        <div id="search-error-banner" class="max-w-2xl mx-auto hidden bg-amber-950/40 border border-amber-900/50 p-4 rounded-xl text-amber-300 text-xs flex items-center justify-between space-x-4 transition-all duration-300">
+            <div class="flex items-center space-x-2">
+                <span class="text-sm">⚠️</span>
+                <span id="search-error-text">Unable to connect to server. Please check your internet connection and try again.</span>
+            </div>
+            <div class="flex items-center space-x-3 flex-shrink-0">
+                <button id="search-retry-btn" onclick="executeSearch()" class="font-bold text-amber-200 hover:text-white underline transition-colors">Retry</button>
+                <button onclick="dismissSearchError()" class="text-amber-500 hover:text-amber-300 font-bold px-2 py-1 rounded">Dismiss</button>
+            </div>
         </div>
 
         <div class="max-w-2xl mx-auto flex items-center justify-between px-3">
@@ -146,6 +163,7 @@
                         onkeydown="if(event.key === 'Enter') performLiveAnalysis()"
                 />
                 <button
+                        id="liveCheckButton"
                         onclick="performLiveAnalysis()"
                         class="bg-blue-600 hover:bg-blue-500 text-white font-medium text-sm px-6 py-2.5 rounded-lg transition-colors duration-150 flex-shrink-0"
                 >
@@ -178,6 +196,42 @@
     </section>
 
 </main>
+
+<footer class="border-t border-slate-900 bg-slate-950/40 py-6 text-center text-xs text-slate-500 space-y-2 mt-auto">
+    <p>© 2026 CogniFlow. Powered by Gemini & Weaviate Cloud.</p>
+    <div>
+        <button onclick="toggleDiagnosticsDrawer()" class="text-slate-400 hover:text-emerald-400 font-mono transition-colors border border-slate-800 bg-slate-900 px-3 py-1.5 rounded-lg text-[10px] uppercase tracking-wider">
+            ⚙️ Troubleshooting Console
+        </button>
+    </div>
+</footer>
+
+<!-- Troubleshooting Logs Diagnostics Drawer -->
+<div id="diagnostics-drawer" class="fixed bottom-0 left-0 right-0 z-[90] bg-slate-900/95 border-t border-slate-800 backdrop-blur-md transform translate-y-full transition-transform duration-300 ease-out shadow-2xl">
+    <div class="max-w-4xl mx-auto p-4 flex flex-col h-72">
+        <!-- Drawer Header -->
+        <div class="flex justify-between items-center pb-3 border-b border-slate-800">
+            <div class="flex items-center space-x-2">
+                <div class="h-2 w-2 rounded-full bg-amber-500 animate-ping"></div>
+                <h3 class="text-xs font-mono font-bold uppercase tracking-wider text-slate-300">Diagnostics & Error Console</h3>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button onclick="copyDiagnosticsLogs()" class="text-[10px] font-mono bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1 rounded transition-colors uppercase tracking-wider border border-slate-700">
+                    Copy Logs
+                </button>
+                <button onclick="clearDiagnosticsLogs()" class="text-[10px] font-mono bg-red-950/30 hover:bg-red-900/20 text-red-400 px-2.5 py-1 rounded transition-colors uppercase tracking-wider border border-red-900/30">
+                    Clear Logs
+                </button>
+                <button onclick="toggleDiagnosticsDrawer()" class="text-slate-400 hover:text-slate-200 text-sm font-bold px-1.5">✕</button>
+            </div>
+        </div>
+        
+        <!-- Drawer Content (List of errors) -->
+        <div id="diagnostics-log-list" class="flex-1 overflow-y-auto py-3 space-y-2 font-mono text-[10px] custom-scrollbar text-slate-400 text-left">
+            <!-- Loaded dynamically -->
+        </div>
+    </div>
+</div>
 
 <!-- Onboarding Tour Container -->
 <div id="onboarding-tour" class="fixed inset-0 z-[100] hidden transition-all duration-300">
@@ -225,6 +279,118 @@
 <script>
     // --- STATE MANAGEMENT ---
     let currentTab = 'search';
+    let cachedPipelineData = null;
+    const tickerRefreshErrors = {};
+    let isDiagnosticsOpen = false;
+
+    // --- DIAGNOSTICS & ERROR LOGGING ---
+    function pushLocalError(errorMsg, context) {
+        console.error(`[Diagnostics] Context: ${context} | Error: ${errorMsg}`);
+        try {
+            const rawLogs = localStorage.getItem('cogniflow-errors');
+            const logs = rawLogs ? JSON.parse(rawLogs) : [];
+            
+            const newError = {
+                timestamp: new Date().toISOString(),
+                message: errorMsg,
+                context: context
+            };
+            
+            logs.unshift(newError);
+            if (logs.length > 5) {
+                logs.pop();
+            }
+            
+            localStorage.setItem('cogniflow-errors', JSON.stringify(logs));
+            renderDiagnosticsLogs();
+        } catch (e) {
+            console.error('Failed to log error to localStorage', e);
+        }
+    }
+
+    function renderDiagnosticsLogs() {
+        const listContainer = document.getElementById('diagnostics-log-list');
+        if (!listContainer) return;
+
+        try {
+            const rawLogs = localStorage.getItem('cogniflow-errors');
+            const logs = rawLogs ? JSON.parse(rawLogs) : [];
+
+            if (logs.length === 0) {
+                listContainer.innerHTML = `<p class="text-slate-650 italic text-center py-8">Console empty. No troubleshooting exceptions recorded.</p>`;
+                return;
+            }
+
+            listContainer.innerHTML = logs.map((log, index) => `
+                <div class="border border-slate-800/80 bg-slate-950/30 p-2.5 rounded-lg flex flex-col space-y-1">
+                    <div class="flex justify-between items-center text-slate-500">
+                        <span>[${index + 1}] Context: ${log.context}</span>
+                        <span>${new Date(log.timestamp).toLocaleString()}</span>
+                    </div>
+                    <div class="text-amber-500 font-bold break-all text-left">${log.message}</div>
+                </div>
+            `).join('');
+        } catch (e) {
+            listContainer.innerHTML = `<p class="text-red-500">Failed to render diagnostics console.</p>`;
+        }
+    }
+
+    function toggleDiagnosticsDrawer() {
+        const drawer = document.getElementById('diagnostics-drawer');
+        isDiagnosticsOpen = !isDiagnosticsOpen;
+        if (isDiagnosticsOpen) {
+            drawer.classList.remove('translate-y-full');
+            renderDiagnosticsLogs();
+        } else {
+            drawer.classList.add('translate-y-full');
+        }
+    }
+
+    function clearDiagnosticsLogs() {
+        localStorage.removeItem('cogniflow-errors');
+        renderDiagnosticsLogs();
+    }
+
+    function copyDiagnosticsLogs() {
+        try {
+            const rawLogs = localStorage.getItem('cogniflow-errors');
+            const logs = rawLogs ? JSON.parse(rawLogs) : [];
+            if (logs.length === 0) {
+                alert('Diagnostics console is empty.');
+                return;
+            }
+            const logText = logs.map((l, i) => `[${i+1}] ${l.timestamp} - Context: ${l.context}\nError: ${l.message}`).join('\n\n');
+            navigator.clipboard.writeText(logText).then(() => {
+                alert('Diagnostics logs copied to clipboard.');
+            }).catch(() => {
+                alert('Clipboard copy failed. Please select and copy manually.');
+            });
+        } catch (e) {
+            alert('Failed to copy logs.');
+        }
+    }
+
+    function showSearchError(message, isRetryable) {
+        const banner = document.getElementById('search-error-banner');
+        const text = document.getElementById('search-error-text');
+        const retryBtn = document.getElementById('search-retry-btn');
+        if (banner && text) {
+            text.innerText = message;
+            if (isRetryable) {
+                retryBtn.classList.remove('hidden');
+            } else {
+                retryBtn.classList.add('hidden');
+            }
+            banner.classList.remove('hidden');
+        }
+    }
+
+    function dismissSearchError() {
+        const banner = document.getElementById('search-error-banner');
+        if (banner) {
+            banner.classList.add('hidden');
+        }
+    }
 
     // --- INITIALIZATION ---
     window.onload = () => {
@@ -299,29 +465,54 @@
 
     // --- LIVE ANALYSIS ---
     async function performLiveAnalysis() {
-        const symbol = document.getElementById('liveSymbol').value.trim().toUpperCase();
+        const symbolInput = document.getElementById('liveSymbol');
+        const symbol = symbolInput.value.trim().toUpperCase();
         const container = document.getElementById('liveResultContainer');
+        const checkBtn = document.getElementById('liveCheckButton');
 
         if (!symbol) return;
 
+        // Set button loading state
+        checkBtn.disabled = true;
+        checkBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        const originalBtnText = checkBtn.innerText;
+        checkBtn.innerText = 'Analyzing...';
+
+        // Pulsing Dots Skeleton Loader
         container.innerHTML = `
-            <div class="py-12 flex flex-col items-center justify-center space-y-3">
-                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-                <p class="text-xs text-slate-400 font-mono uppercase">Invoking Pipeline for ${symbol}...</p>
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-8 space-y-6 animate-pulse">
+                <div class="flex justify-between items-start">
+                    <div class="space-y-2 w-1/3">
+                        <div class="h-8 bg-slate-850 rounded"></div>
+                        <div class="h-4 bg-slate-850 rounded w-1/2"></div>
+                    </div>
+                    <div class="w-1/4 h-12 bg-slate-850 rounded"></div>
+                </div>
+                <div class="space-y-3 pt-4 border-t border-slate-800">
+                    <div class="h-4 bg-slate-850 rounded"></div>
+                    <div class="h-4 bg-slate-850 rounded w-5/6"></div>
+                    <div class="h-4 bg-slate-850 rounded w-2/3"></div>
+                </div>
+                <div class="text-center text-xs font-mono text-slate-500 uppercase tracking-widest pt-2">
+                    🧠 Analyzing ticker data... Please wait...
+                </div>
             </div>
         `;
 
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s timeout
+
         try {
-            const response = await fetch(`/api/insights/live/${symbol}`);
+            const response = await fetch(`/api/insights/live/${symbol}`, { signal: controller.signal });
+            clearTimeout(timeoutId);
+
             const data = await response.json();
 
-            if (data.error) {
-                container.innerHTML = `
-                    <div class="border border-red-900/30 bg-red-950/20 text-red-400 rounded-xl p-6 text-center text-sm font-mono">
-                        Error: ${data.error}
-                    </div>
-                `;
-                return;
+            if (!response.ok || data.error) {
+                if (response.status >= 500) {
+                    throw new Error('5XX_SERVER_ERROR');
+                }
+                throw new Error(data.error || 'SERVER_ERROR');
             }
 
             container.innerHTML = `
@@ -354,9 +545,44 @@
                     </div>
                 </div>
             `;
-        } catch (e) {
-            container.innerHTML = `<div class="p-6 text-center text-red-500 text-sm">Failed to connect to Rest layer.</div>`;
+        } catch (error) {
+            clearTimeout(timeoutId);
+            let userFriendlyMsg = '⚠️ Unable to connect to server. Please check your internet connection and try again.';
+            let isRetryable = true;
+
+            if (error.name === 'AbortError' || error.message === '5XX_SERVER_ERROR') {
+                userFriendlyMsg = '⏱️ The server is taking too long to respond. Please retry in a few moments.';
+            } else if (error.message.includes('UNKNOWN_TICKER') || error.message.includes('not found') || error.message.includes('404')) {
+                userFriendlyMsg = `🔍 No relevant insights found for ${symbol}. Try different keywords or check if symbol exists.`;
+                isRetryable = false;
+            }
+
+            // Save to localStorage diagnostics
+            pushLocalError(error.message || 'AnalysisError', `performLiveAnalysis: ${symbol}`);
+
+            container.innerHTML = `
+                <div class="border border-amber-900/30 bg-amber-950/20 text-amber-400 rounded-xl p-6 text-center text-sm space-y-4 flex flex-col items-center">
+                    <span>${userFriendlyMsg}</span>
+                    <div class="flex space-x-3">
+                        ${isRetryable ? `<button onclick="performLiveAnalysis()" class="bg-amber-600 hover:bg-amber-500 text-white font-medium text-xs px-4 py-2 rounded-lg transition-colors">Retry</button>` : ''}
+                        <button onclick="dismissLiveAnalysisError()" class="border border-amber-800 text-amber-300 hover:bg-amber-900/30 font-medium text-xs px-4 py-2 rounded-lg transition-colors">Dismiss</button>
+                    </div>
+                </div>
+            `;
+        } finally {
+            checkBtn.disabled = false;
+            checkBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            checkBtn.innerText = originalBtnText;
         }
+    }
+
+    function dismissLiveAnalysisError() {
+        const container = document.getElementById('liveResultContainer');
+        container.innerHTML = `
+            <div class="border border-dashed border-slate-800 rounded-xl p-12 text-center text-slate-500 text-sm">
+                Results of live analysis will appear here.
+            </div>
+        `;
     }
 
     // --- MEMORY SEARCH ---
@@ -369,8 +595,27 @@
         const queryInput = document.getElementById('searchQuery').value.trim();
         const resultsGrid = document.getElementById('resultsGrid');
         const resultCount = document.getElementById('resultCount');
+        const searchBtn = document.getElementById('searchButton');
+        const searchBtnText = document.getElementById('searchButtonText');
+        const loadingText = document.getElementById('search-loading-text');
 
         if (!queryInput) return;
+
+        // Reset error state
+        dismissSearchError();
+
+        // Set loading state
+        searchBtn.disabled = true;
+        searchBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        const originalBtnText = searchBtnText.innerHTML;
+        searchBtnText.innerHTML = `
+            <svg class="w-4 h-4 animate-spin text-white inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span>Searching...</span>
+        `;
+        if (loadingText) loadingText.classList.remove('hidden');
 
         resultsGrid.innerHTML = `
             <div class="col-span-full py-12 flex flex-col items-center justify-center space-y-3">
@@ -379,20 +624,27 @@
             </div>
         `;
 
+        const isHybrid = document.getElementById('hybridToggle').checked;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
         try {
-            const isHybrid = document.getElementById('hybridToggle').checked;
-            const response = await fetch(`/api/insights/search?query=${encodeURIComponent(queryInput)}&limit=6&hybrid=${isHybrid}`);
-            const data = await response.json();
+            const response = await fetch(`/api/insights/search?query=${encodeURIComponent(queryInput)}&limit=6&hybrid=${isHybrid}`, { signal: controller.signal });
+            clearTimeout(timeoutId);
 
             if (!response.ok) {
-                resultsGrid.innerHTML = `<div class="col-span-full border border-red-900/30 bg-red-950/20 text-red-400 rounded-xl p-8 text-center text-sm font-mono">Search Failed: ${data.error || 'Unknown Error'}</div>`;
-                resultCount.innerText = `Error`;
-                return;
+                if (response.status >= 500) {
+                    throw new Error('5XX_SERVER_ERROR');
+                }
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || 'SERVER_ERROR');
             }
 
+            const data = await response.json();
             resultCount.innerText = `${data.length} records fetched`;
 
             if (data.length === 0) {
+                showSearchError('🔍 No relevant insights found. Try different keywords or check if data has been ingested for this symbol.', false);
                 resultsGrid.innerHTML = `<div class="col-span-full border border-dashed border-slate-800 rounded-xl p-12 text-center text-slate-500 text-sm">Zero matching vectors recovered.</div>`;
                 return;
             }
@@ -416,7 +668,27 @@
             `).join('');
 
         } catch (error) {
-            resultsGrid.innerHTML = `<div class="col-span-full p-6 text-center text-red-500 text-sm">Search layer unavailable.</div>`;
+            clearTimeout(timeoutId);
+            let userFriendlyMsg = '⚠️ Unable to connect to server. Please check your internet connection and try again.';
+            let isRetryable = true;
+
+            if (error.name === 'AbortError' || error.message === '5XX_SERVER_ERROR') {
+                userFriendlyMsg = '⏱️ The server is taking too long to respond. Please retry in a few moments.';
+            } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError') || error.message.includes('Failed to connect')) {
+                userFriendlyMsg = '⚠️ Unable to connect to server. Please check your internet connection and try again.';
+            }
+
+            // Save to localStorage diagnostics
+            pushLocalError(error.message || 'NetworkError', 'executeSearch');
+
+            showSearchError(userFriendlyMsg, isRetryable);
+            resultsGrid.innerHTML = `<div class="col-span-full border border-dashed border-red-950/20 bg-red-950/5 rounded-xl p-12 text-center text-slate-500 text-sm">Search layer unavailable.</div>`;
+            resultCount.innerText = `Error`;
+        } finally {
+            searchBtn.disabled = false;
+            searchBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            searchBtnText.innerHTML = originalBtnText;
+            if (loadingText) loadingText.classList.add('hidden');
         }
     }
 
@@ -674,22 +946,38 @@
             const response = await fetch('/api/insights/pipeline/status');
             const data = await response.json();
 
+            // Cache data globally
+            cachedPipelineData = data;
+
             // Update summary and metrics
             document.getElementById('pipeline-status-summary').innerText = `Total insights: ${data.totalInsights}`;
             document.getElementById('metric-global-run').innerText = formatDateTime(data.lastGlobalRun);
             document.getElementById('metric-total-insights').innerText = data.totalInsights;
 
             // Render individual ticker statuses
-            const container = document.getElementById('pipeline-tickers');
-            container.innerHTML = data.tickers.map(t => {
-                let dotColorClass = 'bg-red-500 shadow-red-500/20';
-                if (t.status === 'healthy') dotColorClass = 'bg-emerald-500 shadow-emerald-500/20';
-                else if (t.status === 'stale') dotColorClass = 'bg-yellow-500 shadow-yellow-500/20';
+            renderPipelineTickers();
 
-                const displayTime = t.lastIngested ? formatDateTime(t.lastIngested) : 'Never';
+        } catch (e) {
+            document.getElementById('pipeline-status-summary').innerText = `Failed to load status`;
+            pushLocalError(e.message || 'PipelineStatusError', 'loadPipelineStatus');
+        }
+    }
 
-                return `
-                    <div class="flex items-center justify-between bg-slate-900 border border-slate-800/60 px-4 py-3 rounded-lg">
+    function renderPipelineTickers() {
+        if (!cachedPipelineData || !cachedPipelineData.tickers) return;
+
+        const container = document.getElementById('pipeline-tickers');
+        container.innerHTML = cachedPipelineData.tickers.map(t => {
+            let dotColorClass = 'bg-red-500 shadow-red-500/20';
+            if (t.status === 'healthy') dotColorClass = 'bg-emerald-500 shadow-emerald-500/20';
+            else if (t.status === 'stale') dotColorClass = 'bg-yellow-500 shadow-yellow-500/20';
+
+            const displayTime = t.lastIngested ? formatDateTime(t.lastIngested) : 'Never';
+            const hasError = !!tickerRefreshErrors[t.symbol];
+
+            return `
+                <div class="flex flex-col bg-slate-900 border border-slate-800/60 px-4 py-3 rounded-lg space-y-2">
+                    <div class="flex items-center justify-between">
                         <div class="flex items-center space-x-3">
                             <span class="h-2.5 w-2.5 rounded-full ${dotColorClass}"></span>
                             <div class="space-y-0.5">
@@ -701,40 +989,75 @@
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 16H21" /></svg>
                         </button>
                     </div>
-                `;
-            }).join('');
-
-        } catch (e) {
-            document.getElementById('pipeline-status-summary').innerText = `Failed to load status`;
-        }
+                    ${hasError ? `
+                    <div class="text-[10px] font-mono text-amber-500 border border-amber-950/80 bg-amber-950/20 px-3 py-2 rounded flex justify-between items-center space-x-2">
+                        <span class="truncate">${tickerRefreshErrors[t.symbol]}</span>
+                        <div class="flex space-x-2 flex-shrink-0">
+                            <button onclick="refreshTicker('${t.symbol}', null)" class="text-blue-400 hover:text-blue-300 font-semibold underline">Retry</button>
+                            <button onclick="dismissTickerError('${t.symbol}')" class="text-slate-400 hover:text-slate-350 font-semibold underline">Dismiss</button>
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+        }).join('');
     }
 
     async function refreshTicker(symbol, btnElement) {
-        const originalHtml = btnElement.innerHTML;
-        btnElement.disabled = true;
-        btnElement.classList.add('cursor-not-allowed', 'text-blue-500');
-        btnElement.innerHTML = `
-            <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-        `;
+        const btn = btnElement && btnElement.title === 'Refresh Now' 
+            ? btnElement 
+            : document.querySelector(`button[onclick*="refreshTicker('${symbol}'"]`);
+
+        let originalHtml = '';
+        if (btn) {
+            originalHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.classList.add('cursor-not-allowed', 'text-blue-500');
+            btn.innerHTML = `
+                <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            `;
+        }
+
+        // Clear error on start
+        dismissTickerError(symbol);
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
 
         try {
-            const response = await fetch(`/api/insights/live/${symbol}`);
+            const response = await fetch(`/api/insights/live/${symbol}`, { signal: controller.signal });
+            clearTimeout(timeoutId);
             const data = await response.json();
             
-            if (data.error) {
-                alert(`Refresh failed for ${symbol}: ${data.error}`);
+            if (!response.ok || data.error) {
+                throw new Error(data.error || 'Ingestion failed');
             }
         } catch (e) {
-            alert(`Network error refreshing ${symbol}`);
+            clearTimeout(timeoutId);
+            const displayTime = (cachedPipelineData && cachedPipelineData.tickers) 
+                ? (cachedPipelineData.tickers.find(t => t.symbol === symbol)?.lastIngested ? formatDateTime(cachedPipelineData.tickers.find(t => t.symbol === symbol).lastIngested) : 'Never') 
+                : 'Never';
+
+            tickerRefreshErrors[symbol] = `❌ Failed to refresh data for ${symbol}. Last successful ingestion was ${displayTime}.`;
+            
+            // Log to localStorage diagnostics
+            pushLocalError(e.message || 'IngestionError', `refreshTicker: ${symbol}`);
         } finally {
-            btnElement.disabled = false;
-            btnElement.classList.remove('cursor-not-allowed', 'text-blue-500');
-            btnElement.innerHTML = originalHtml;
+            if (btn) {
+                btn.disabled = false;
+                btn.classList.remove('cursor-not-allowed', 'text-blue-500');
+                btn.innerHTML = originalHtml;
+            }
             loadPipelineStatus();
         }
+    }
+
+    function dismissTickerError(symbol) {
+        delete tickerRefreshErrors[symbol];
+        renderPipelineTickers();
     }
 
     function formatDateTime(isoString) {
