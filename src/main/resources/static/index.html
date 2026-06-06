@@ -10,6 +10,8 @@
     <style>
         body { font-family: 'Inter', sans-serif; }
         .tab-active { @apply border-emerald-500 text-emerald-500; }
+        #hybridToggle:checked ~ .toggle-bg { background-color: #064e3b; }
+        #hybridToggle:checked ~ .dot { transform: translateX(16px); background-color: #10b981; }
     </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col">
@@ -56,6 +58,24 @@
             >
                 Search Memory
             </button>
+        </div>
+
+        <div class="max-w-2xl mx-auto flex items-center justify-between px-3">
+            <!-- Checkbox Toggle -->
+            <label class="flex items-center space-x-3 cursor-pointer group select-none text-xs text-slate-400 hover:text-slate-200 transition-colors">
+                <div class="relative flex items-center">
+                    <input type="checkbox" id="hybridToggle" checked class="sr-only" onchange="toggleHybridBadge()" />
+                    <div class="toggle-bg w-8 h-4 bg-slate-800 rounded-full transition-colors"></div>
+                    <div class="dot absolute left-0.5 w-3 h-3 bg-slate-500 rounded-full transition-all"></div>
+                </div>
+                <span>Hybrid Search Mode</span>
+            </label>
+
+            <!-- Status Badge -->
+            <div id="hybridBadge" class="flex items-center space-x-1.5 bg-emerald-950/40 text-emerald-400 border border-emerald-900/30 px-2 py-1 rounded text-[10px] font-mono font-semibold uppercase tracking-wider transition-all duration-200 transform scale-100 opacity-100">
+                <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>Hybrid Mode Active</span>
+            </div>
         </div>
 
         <div class="max-w-2xl mx-auto flex flex-wrap gap-2 justify-center">
@@ -324,12 +344,13 @@
         resultsGrid.innerHTML = `
             <div class="col-span-full py-12 flex flex-col items-center justify-center space-y-3">
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
-                <p class="text-xs text-slate-400 font-mono">Running conceptual vector mapping...</p>
+                <p class="text-xs text-slate-400 font-mono">Running hybrid semantic and keyword search mapping...</p>
             </div>
         `;
 
         try {
-            const response = await fetch(`/api/insights/search?query=${encodeURIComponent(queryInput)}&limit=6`);
+            const isHybrid = document.getElementById('hybridToggle').checked;
+            const response = await fetch(`/api/insights/search?query=${encodeURIComponent(queryInput)}&limit=6&hybrid=${isHybrid}`);
             const data = await response.json();
 
             if (!response.ok) {
@@ -576,6 +597,18 @@
         
         // Advance tour to next step after search execution
         nextTourStep();
+    }
+
+    function toggleHybridBadge() {
+        const toggle = document.getElementById('hybridToggle');
+        const badge = document.getElementById('hybridBadge');
+        if (toggle.checked) {
+            badge.classList.remove('opacity-0', 'scale-95');
+            badge.classList.add('opacity-100', 'scale-100');
+        } else {
+            badge.classList.remove('opacity-100', 'scale-100');
+            badge.classList.add('opacity-0', 'scale-95');
+        }
     }
 </script>
 </body>

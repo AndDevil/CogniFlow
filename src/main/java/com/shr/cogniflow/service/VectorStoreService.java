@@ -9,6 +9,7 @@ import io.weaviate.client.v1.data.model.WeaviateObject;
 import io.weaviate.client.v1.filters.Operator;
 import io.weaviate.client.v1.filters.WhereFilter;
 import io.weaviate.client.v1.graphql.model.GraphQLResponse;
+import io.weaviate.client.v1.graphql.query.argument.HybridArgument;
 import io.weaviate.client.v1.graphql.query.argument.NearVectorArgument;
 import io.weaviate.client.v1.graphql.query.fields.Field;
 import io.weaviate.client.v1.schema.model.DataType;
@@ -165,6 +166,47 @@ public class VectorStoreService {
         } catch (Exception e) {
             log.error("Failed to execute vector search", e);
             return Collections.emptyList();
+        }
+    }
+
+    public List<Map<String, Object>> hybridSearch(String query, float[] queryVector, int limit) {
+        log.info("Executing hybrid search (semantic + keyword) in Weaviate for query: '{}'...", query);
+
+        Float[] boxedVector = new Float[queryVector.length];
+        for (int i = 0; i < queryVector.length; i++) {
+            boxedVector[i] = queryVector[i];
+        }
+
+        Field symbol = Field.builder().name("symbol").build();
+        Field price = Field.builder().name("price").build();
+        Field insight = Field.builder().name("insight").build();
+        Field timestamp = Field.builder().name("timestamp").build();
+
+        HybridArgument hybrid = HybridArgument.builder()
+                .query(query)
+                .vector(boxedVector)
+                .alpha(0.5f) // Balanced alpha: 50% vector, 50% keyword
+                .fusionType("rankedFusion") // Reciprocal Rank Fusion (RRF)
+                .properties(new String[]{"insight", "symbol"})
+                .build();
+
+        try {
+            Result<GraphQLResponse> result = client.graphQL().get()
+                    .withClassName(CLASS_NAME)
+                    .withFields(symbol, price, insight, timestamp)
+                    .withHybrid(hybrid)
+                    .withLimit(limit)
+                    .run();
+
+            if (result.hasErrors()) {
+                log.error("Weaviate hybrid search error: {}", result.getError().getMessages());
+                return semanticSearch(queryVector, limit);
+            }
+
+            return extractDataFromResponse(result);
+        } catch (Exception e) {
+            log.error("Failed to execute hybrid search, falling back to semantic search", e);
+            return semanticSearch(queryVector, limit);
         }
     }
 

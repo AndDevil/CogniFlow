@@ -56,17 +56,23 @@ public class InsightController {
         return ResponseEntity.ok(formattedResult);
     }
 
-    @Operation(summary = "Search historical insights", description = "Performs semantic vector search across all stored AI insights")
+    @Operation(summary = "Search historical insights", description = "Performs semantic vector search or hybrid search across all stored AI insights")
     @GetMapping("/search")
     public ResponseEntity<List<Map<String, Object>>> searchInsights(
             @Parameter(description = "Natural language query (e.g., 'bullish tech stocks')") @RequestParam String query,
-            @Parameter(description = "Maximum number of results to return") @RequestParam(defaultValue = "3") int limit) {
+            @Parameter(description = "Maximum number of results to return") @RequestParam(defaultValue = "3") int limit,
+            @Parameter(description = "Enable hybrid search (combining semantic and keyword)") @RequestParam(defaultValue = "true") boolean hybrid) {
 
-        log.info("REST request to search insights for conceptual query: '{}'", query);
+        log.info("REST request to search insights for conceptual query: '{}', hybrid: {}", query, hybrid);
 
         float[] queryVector = embeddingService.getEmbedding(query);
 
-        List<Map<String, Object>> rawResults = vectorStoreService.semanticSearch(queryVector, limit);
+        List<Map<String, Object>> rawResults;
+        if (hybrid) {
+            rawResults = vectorStoreService.hybridSearch(query, queryVector, limit);
+        } else {
+            rawResults = vectorStoreService.semanticSearch(queryVector, limit);
+        }
 
         List<Map<String, Object>> formattedResults = new ArrayList<>();
         for (Map<String, Object> rawMap : rawResults) {

@@ -81,6 +81,7 @@ class InsightControllerTest {
         );
         
         when(vectorStoreService.semanticSearch(any(), anyInt())).thenReturn(mockResults);
+        when(vectorStoreService.hybridSearch(anyString(), any(), anyInt())).thenReturn(mockResults);
 
         mockMvc.perform(get("/api/insights/search")
                 .param("query", query)
