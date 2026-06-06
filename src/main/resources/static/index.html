@@ -4,273 +4,379 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CogniFlow // Market Intelligence</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%2310b981%22/></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%230077b6%22/></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        finBlue: '#0a2540',
+                        finGray: '#f8f9fa',
+                        finAccent: '#0077b6',
+                        finAccentHover: '#0096c7',
+                        finText: '#212529',
+                        finSubtext: '#495057'
+                    }
+                }
+            }
+        }
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .tab-active { @apply border-emerald-500 text-emerald-500; }
-        #hybridToggle:checked ~ .toggle-bg { background-color: #064e3b; }
-        #hybridToggle:checked ~ .dot { transform: translateX(16px); background-color: #10b981; }
+        body { 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            background-color: #f8f9fa;
+            color: #212529;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f3f5;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #dee2e6;
+            border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #ced4da;
+        }
+        #hybridToggle:checked ~ .toggle-bg { background-color: #0077b6; }
+        #hybridToggle:checked ~ .dot { transform: translateX(16px); background-color: #ffffff; }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col">
+<body class="min-h-screen flex flex-col">
 
-<header class="border-b border-slate-900 bg-slate-900/50 backdrop-blur sticky top-0 z-50 px-6 py-4 flex justify-between items-center">
+<!-- Navigation Header -->
+<header class="bg-finBlue text-white shadow-md sticky top-0 z-50 px-6 py-4 flex justify-between items-center" role="banner">
     <div class="flex items-center space-x-3">
-        <div class="h-3 w-3 rounded-full bg-emerald-500 animate-pulse"></div>
-        <h1 class="text-xl font-bold tracking-wider text-slate-100 uppercase">COGNIFLOW</h1>
+        <div class="h-3 w-3 rounded-full bg-finAccent animate-pulse"></div>
+        <h1 class="text-xl font-bold tracking-wider uppercase">COGNIFLOW</h1>
     </div>
-    <div class="flex space-x-4">
-        <a href="/swagger-ui.html" target="_blank" class="text-xs font-mono text-slate-400 hover:text-emerald-400 transition-colors">API Docs</a>
-        <div id="pipeline-status" class="text-xs font-mono text-slate-400 bg-slate-900 px-3 py-1.5 rounded border border-slate-800">
+    <div class="flex items-center space-x-4">
+        <a href="/swagger-ui.html" target="_blank" class="text-xs font-mono text-slate-300 hover:text-white transition-colors focus:outline-none focus:underline" aria-label="Open API Swagger Documentation in new tab">API Docs</a>
+        <div id="pipeline-status" class="text-xs font-mono text-slate-350 bg-slate-900 px-3 py-1.5 rounded border border-slate-800" aria-live="polite">
             Pipeline: Active
         </div>
     </div>
 </header>
 
-<main class="flex-1 max-w-6xl w-full mx-auto p-6 space-y-8">
+<!-- Main Container -->
+<main class="flex-1 max-w-7xl w-full mx-auto p-6 space-y-6" role="main">
 
     <!-- Navigation Tabs -->
-    <div class="flex space-x-8 border-b border-slate-900">
-        <button onclick="switchTab('search')" id="tab-search" class="pb-4 px-2 text-sm font-semibold border-b-2 border-emerald-500 text-emerald-500 transition-all">Memory Search</button>
-        <button onclick="switchTab('live')" id="tab-live" class="pb-4 px-2 text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-300 transition-all">Live Analysis & Tracking</button>
+    <div class="flex space-x-8 border-b border-slate-200" role="tablist">
+        <button onclick="switchTab('search')" id="tab-search" class="pb-4 px-2 text-sm font-semibold border-b-2 border-finAccent text-finAccent transition-all focus:outline-none" role="tab" aria-selected="true" aria-controls="section-search" aria-label="Memory Search tab">Memory Search</button>
+        <button onclick="switchTab('live')" id="tab-live" class="pb-4 px-2 text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition-all focus:outline-none" role="tab" aria-selected="false" aria-controls="section-live" aria-label="Live Analysis and Pool Tracking tab">Live Analysis & Tracking</button>
     </div>
 
     <!-- Search Section -->
-    <section id="section-search" class="space-y-6">
+    <section id="section-search" class="space-y-6" role="tabpanel" aria-labelledby="tab-search">
         <div class="text-center max-w-xl mx-auto space-y-2">
-            <h2 class="text-3xl font-extrabold tracking-tight">Interrogate Vector Memory</h2>
-            <p class="text-sm text-slate-400">Search stored analytical insights across your Weaviate vector lake using conceptual natural language phrases.</p>
+            <h2 class="text-3xl font-extrabold tracking-tight text-finBlue">Interrogate Vector Memory</h2>
+            <p class="text-sm text-finSubtext">Search stored analytical insights across your Weaviate vector lake using conceptual natural language phrases.</p>
         </div>
 
-        <div class="max-w-2xl mx-auto flex items-center space-x-2 bg-slate-900 p-2 rounded-xl border border-slate-800 focus-within:border-emerald-500 transition-colors">
-            <input
-                    type="text"
-                    id="searchQuery"
-                    placeholder="e.g., Show me assets reflecting mild optimism or bullish demands..."
-                    class="w-full bg-transparent border-0 px-3 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-0 text-sm"
-                    onkeydown="if(event.key === 'Enter') executeSearch()"
-            />
-            <button
-                    id="searchButton"
-                    onclick="executeSearch()"
-                    class="bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-sm px-5 py-2.5 rounded-lg transition-colors duration-150 flex-shrink-0 flex items-center justify-center space-x-2"
-            >
-                <span id="searchButtonText">Search Memory</span>
-            </button>
-        </div>
-
-        <div id="search-loading-text" class="hidden text-[10px] text-emerald-400 font-mono text-center animate-pulse">
-            ⚡ Interrogating vector clusters... Searching...
-        </div>
-
-        <!-- Search Error Banner -->
-        <div id="search-error-banner" class="max-w-2xl mx-auto hidden bg-amber-950/40 border border-amber-900/50 p-4 rounded-xl text-amber-300 text-xs flex items-center justify-between space-x-4 transition-all duration-300">
-            <div class="flex items-center space-x-2">
-                <span class="text-sm">⚠️</span>
-                <span id="search-error-text">Unable to connect to server. Please check your internet connection and try again.</span>
-            </div>
-            <div class="flex items-center space-x-3 flex-shrink-0">
-                <button id="search-retry-btn" onclick="executeSearch()" class="font-bold text-amber-200 hover:text-white underline transition-colors">Retry</button>
-                <button onclick="dismissSearchError()" class="text-amber-500 hover:text-amber-300 font-bold px-2 py-1 rounded">Dismiss</button>
-            </div>
-        </div>
-
-        <div class="max-w-2xl mx-auto flex items-center justify-between px-3">
-            <!-- Checkbox Toggle -->
-            <label class="flex items-center space-x-3 cursor-pointer group select-none text-xs text-slate-400 hover:text-slate-200 transition-colors">
-                <div class="relative flex items-center">
-                    <input type="checkbox" id="hybridToggle" checked class="sr-only" onchange="toggleHybridBadge()" />
-                    <div class="toggle-bg w-8 h-4 bg-slate-800 rounded-full transition-colors"></div>
-                    <div class="dot absolute left-0.5 w-3 h-3 bg-slate-500 rounded-full transition-all"></div>
-                </div>
-                <span>Hybrid Search Mode</span>
-            </label>
-
-            <!-- Status Badge -->
-            <div id="hybridBadge" class="flex items-center space-x-1.5 bg-emerald-950/40 text-emerald-400 border border-emerald-900/30 px-2 py-1 rounded text-[10px] font-mono font-semibold uppercase tracking-wider transition-all duration-200 transform scale-100 opacity-100">
-                <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span>Hybrid Mode Active</span>
-            </div>
-        </div>
-
-        <!-- Collapsible Pipeline Status Panel -->
-        <div class="max-w-2xl mx-auto border border-slate-900 bg-slate-900/30 rounded-xl overflow-hidden transition-all duration-300">
-            <!-- Panel Header Toggle -->
-            <button onclick="togglePipelinePanel()" class="w-full flex justify-between items-center px-4 py-3 bg-slate-900/50 hover:bg-slate-900/80 transition-colors text-xs font-semibold tracking-wider text-slate-300 uppercase focus:outline-none focus:ring-0">
-                <div class="flex items-center space-x-2">
-                    <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
-                    <span>Data Pipeline Status</span>
-                </div>
-                <div class="flex items-center space-x-2">
-                    <span id="pipeline-status-summary" class="text-[10px] text-slate-500 normal-case font-mono">Loading pipeline stats...</span>
-                    <svg id="pipeline-arrow" class="w-3 h-3 text-slate-500 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
-                </div>
-            </button>
+        <!-- Master Splitter Layout (Responsive two-column on desktop) -->
+        <div class="flex flex-col lg:flex-row gap-6 items-stretch" id="search-layout">
             
-            <!-- Panel Content -->
-            <div id="pipeline-content" class="hidden border-t border-slate-900 p-4 space-y-4 bg-slate-950/20">
-                <!-- Summary Metrics line -->
-                <div class="flex flex-col sm:flex-row justify-between text-[11px] font-mono text-slate-400 bg-slate-900/40 p-2.5 rounded-lg border border-slate-900 space-y-1 sm:space-y-0">
-                    <div>Last Global Run: <span id="metric-global-run" class="text-white font-bold">...</span></div>
-                    <div class="hidden sm:block text-slate-700">|</div>
-                    <div>Total Insights Ingested: <span id="metric-total-insights" class="text-emerald-400 font-bold">...</span></div>
+            <!-- Left Column: Search controls + Results -->
+            <div class="flex-1 space-y-6 min-w-0" id="search-left-col">
+                
+                <!-- Search bar wrapper -->
+                <div class="space-y-3">
+                    <div class="flex items-center space-x-2 bg-white p-2 rounded-xl border border-slate-300 focus-within:border-finAccent focus-within:ring-1 focus-within:ring-finAccent shadow-sm transition-all">
+                        <input
+                                type="text"
+                                id="searchQuery"
+                                placeholder="Try: &quot;Microsoft recent AI investments&quot;"
+                                class="w-full bg-transparent border-0 px-3 py-2 text-finText placeholder-slate-400 focus:outline-none focus:ring-0 text-sm"
+                                onkeydown="if(event.key === 'Enter') { saveRecentSearch(this.value.trim()); executeSearch(); }"
+                                oninput="handleSearchInput()"
+                                aria-label="Natural language search input field"
+                        />
+                        <button
+                                id="searchButton"
+                                onclick="saveRecentSearch(document.getElementById('searchQuery').value.trim()); executeSearch()"
+                                class="bg-finAccent hover:bg-finAccentHover text-white font-medium text-sm px-5 py-2.5 rounded-lg transition-colors duration-150 flex-shrink-0 flex items-center justify-center space-x-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-finAccent"
+                                aria-label="Submit search query"
+                        >
+                            <span id="searchButtonText">Search Memory</span>
+                        </button>
+                    </div>
+
+                    <!-- Recent Searches chips -->
+                    <div class="flex items-center space-x-2 flex-wrap gap-y-1.5 px-1" aria-label="Recent queries">
+                        <span class="text-xs font-semibold text-finSubtext uppercase tracking-wider select-none">Recents:</span>
+                        <div id="recent-searches-container" class="flex flex-wrap gap-2">
+                            <!-- Loaded dynamically -->
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Ticker status grid -->
-                <div id="pipeline-tickers" class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <!-- Loaded dynamically -->
+                <div id="search-loading-text" class="hidden text-[10px] text-finAccent font-mono text-center animate-pulse">
+                    ⚡ Interrogating vector clusters... Searching...
+                </div>
+
+                <!-- Search Error Banner -->
+                <div id="search-error-banner" class="hidden bg-red-50 border border-red-200 p-4 rounded-xl text-red-700 text-xs flex items-center justify-between space-x-4 transition-all duration-300">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm">⚠️</span>
+                        <span id="search-error-text">Unable to connect to server. Please check your connection.</span>
+                    </div>
+                    <div class="flex items-center space-x-3 flex-shrink-0">
+                        <button id="search-retry-btn" onclick="executeSearch()" class="font-bold text-finAccent hover:underline focus:outline-none">Retry</button>
+                        <button onclick="dismissSearchError()" class="text-red-500 hover:text-red-800 font-bold px-2 py-1 rounded focus:outline-none">Dismiss</button>
+                    </div>
+                </div>
+
+                <!-- Filter Panel -->
+                <div class="bg-white border border-slate-200 p-4 rounded-xl shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div class="flex items-center space-x-4">
+                        <!-- Toggle Hybrid -->
+                        <label class="flex items-center space-x-3 cursor-pointer group select-none text-xs text-finSubtext hover:text-finText transition-colors">
+                            <div class="relative flex items-center">
+                                <input type="checkbox" id="hybridToggle" checked class="sr-only" onchange="toggleHybridBadge()" aria-label="Toggle hybrid search mode checkbox" />
+                                <div class="toggle-bg w-8 h-4 bg-slate-200 rounded-full transition-colors"></div>
+                                <div class="dot absolute left-0.5 w-3 h-3 bg-slate-400 rounded-full transition-all"></div>
+                            </div>
+                            <span class="font-medium">Hybrid Search Mode</span>
+                        </label>
+
+                        <!-- Hybrid mode badge -->
+                        <div id="hybridBadge" class="flex items-center space-x-1.5 bg-blue-50 text-finAccent border border-blue-100 px-2 py-0.5 rounded text-[10px] font-mono font-semibold uppercase tracking-wider transition-all duration-200 transform scale-100 opacity-100 select-none">
+                            <span class="h-1.5 w-1.5 rounded-full bg-finAccent animate-pulse"></span>
+                            <span>Hybrid Mode Active</span>
+                        </div>
+                    </div>
+
+                    <!-- Dropdown Filter by symbol -->
+                    <div class="flex items-center space-x-2 text-xs">
+                        <label for="symbolFilter" class="text-finSubtext font-semibold select-none">Filter by Symbol:</label>
+                        <select id="symbolFilter" onchange="filterResultsBySymbol()" class="bg-slate-50 border border-slate-300 text-slate-700 px-3 py-1.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-finAccent focus:border-finAccent text-xs cursor-pointer" aria-label="Filter results dropdown selector">
+                            <option value="ALL">All Symbols</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Collapsible Pipeline Status -->
+                <div class="border border-slate-200 bg-white rounded-xl overflow-hidden shadow-sm transition-all duration-300">
+                    <button onclick="togglePipelinePanel()" class="w-full flex justify-between items-center px-4 py-3 bg-slate-50 hover:bg-slate-100 transition-colors text-xs font-semibold tracking-wider text-slate-700 uppercase focus:outline-none" aria-expanded="false" aria-label="Toggle pipeline status metrics layout panel">
+                        <div class="flex items-center space-x-2">
+                            <svg class="w-4 h-4 text-finAccent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                            <span>Data Pipeline Status</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span id="pipeline-status-summary" class="text-[10px] text-slate-500 normal-case font-mono">Loading pipeline stats...</span>
+                            <svg id="pipeline-arrow" class="w-3.5 h-3.5 text-slate-500 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                        </div>
+                    </button>
+                    <div id="pipeline-content" class="hidden border-t border-slate-200 p-4 space-y-4 bg-slate-50/50">
+                        <div class="flex flex-col sm:flex-row justify-between text-[11px] font-mono text-finSubtext bg-slate-100 p-2.5 rounded-lg border border-slate-200 space-y-1 sm:space-y-0">
+                            <div>Last Global Run: <span id="metric-run-time" class="text-finBlue font-bold">...</span></div>
+                            <div class="hidden sm:block text-slate-300">|</div>
+                            <div>Total Insights Ingested: <span id="metric-total-records" class="text-finAccent font-bold">...</span></div>
+                        </div>
+                        <div id="pipeline-tickers" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <!-- Loaded dynamically -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Concept Pills -->
+                <div class="flex flex-wrap gap-2 justify-center">
+                    <span class="text-xs text-finSubtext self-center mr-1 select-none">Concepts:</span>
+                    <button onclick="applyPill('positive market sentiment')" class="text-xs bg-white border border-slate-300 hover:border-finAccent text-slate-700 px-3 py-1.5 rounded-full hover:bg-slate-50 transition-colors focus:outline-none focus:ring-1 focus:ring-finAccent">👍 Positive Sentiment</button>
+                    <button onclick="applyPill('mild buying interest')" class="text-xs bg-white border border-slate-300 hover:border-finAccent text-slate-700 px-3 py-1.5 rounded-full hover:bg-slate-50 transition-colors focus:outline-none focus:ring-1 focus:ring-finAccent">📊 Buying Interest</button>
+                    <button onclick="applyPill('bullish outlook')" class="text-xs bg-white border border-slate-300 hover:border-finAccent text-slate-700 px-3 py-1.5 rounded-full hover:bg-slate-50 transition-colors focus:outline-none focus:ring-1 focus:ring-finAccent">🚀 Bullish Outlook</button>
+                </div>
+
+                <!-- Search Results Grid -->
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-sm font-semibold uppercase tracking-wider text-finSubtext">Semantic Results</h3>
+                        <span id="resultCount" class="text-xs font-mono text-finSubtext font-medium">0 records fetched</span>
+                    </div>
+                    <div id="resultsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="col-span-full border border-dashed border-slate-300 rounded-xl p-12 text-center text-slate-500 text-sm bg-white shadow-sm">
+                            Enter a query in the search bar above to interrogate the vector cluster.
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div class="max-w-2xl mx-auto flex flex-wrap gap-2 justify-center">
-            <span class="text-xs text-slate-500 self-center mr-1">Concepts:</span>
-            <button onclick="applyPill('positive market sentiment')" class="text-xs bg-slate-900 border border-slate-800 text-slate-300 px-3 py-1.5 rounded-full hover:border-emerald-500 transition-colors">👍 Positive Sentiment</button>
-            <button onclick="applyPill('mild buying interest')" class="text-xs bg-slate-900 border border-slate-800 text-slate-300 px-3 py-1.5 rounded-full hover:border-emerald-500 transition-colors">📊 Buying Interest</button>
-            <button onclick="applyPill('bullish outlook')" class="text-xs bg-slate-900 border border-slate-800 text-slate-300 px-3 py-1.5 rounded-full hover:border-emerald-500 transition-colors">🚀 Bullish Outlook</button>
-        </div>
-
-        <div class="space-y-4">
-            <div class="flex justify-between items-center">
-                <h3 class="text-sm font-semibold uppercase tracking-wider text-slate-400">Semantic Results</h3>
-                <span id="resultCount" class="text-xs font-mono text-slate-500">0 records fetched</span>
+            <!-- Draggable splitter bar -->
+            <div class="hidden lg:flex w-2 hover:w-3 cursor-col-resize bg-slate-200 hover:bg-slate-400 transition-all rounded select-none relative group shrink-0" id="panel-splitter" title="Drag to resize the AI Analysis Panel">
+                <div class="absolute inset-y-0 left-1/2 w-0.5 bg-slate-300 group-hover:bg-finAccent transform -translate-x-1/2"></div>
             </div>
-            <div id="resultsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div class="col-span-full border border-dashed border-slate-800 rounded-xl p-12 text-center text-slate-500 text-sm">
-                    Enter a conceptual search query above to interrogate the vector cluster.
+
+            <!-- Right Column: AI Analysis Panel -->
+            <div class="w-full lg:w-[380px] min-w-[280px] max-w-[700px] flex flex-col shrink-0 bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden" id="analysis-panel">
+                <div class="bg-slate-50 border-b border-slate-200 px-5 py-4 flex justify-between items-center">
+                    <h3 class="text-sm font-bold uppercase tracking-wider text-finBlue">AI Analysis Detail</h3>
+                    <span class="text-[10px] font-mono bg-slate-200 px-2 py-0.5 rounded text-slate-600">Gemini Ingest</span>
+                </div>
+                
+                <div class="p-6 flex-1 flex flex-col justify-between space-y-6 overflow-y-auto custom-scrollbar" id="analysis-panel-body">
+                    <!-- Default placeholder state -->
+                    <div class="flex-1 flex flex-col justify-center items-center text-center p-8 text-slate-400 space-y-3" id="analysis-placeholder">
+                        <svg class="w-12 h-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
+                        <p class="text-xs font-medium leading-relaxed">Select an insight card from the search results on the left to read its full AI summary and perform analysis.</p>
+                    </div>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- Live Analysis Section -->
-    <section id="section-live" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <section id="section-live" class="hidden flex flex-col lg:flex-row gap-6 items-stretch" role="tabpanel" aria-labelledby="tab-live">
         <!-- Left: Live Query -->
-        <div class="lg:col-span-2 space-y-6">
+        <div class="flex-1 space-y-6 min-w-0">
             <div class="space-y-2">
-                <h2 class="text-2xl font-bold tracking-tight">On-Demand AI Analysis</h2>
-                <p class="text-sm text-slate-400">Fetch real-time data and generate fresh AI insights for any stock symbol globally.</p>
+                <h2 class="text-2xl font-bold tracking-tight text-finBlue">On-Demand AI Analysis</h2>
+                <p class="text-sm text-finSubtext">Fetch real-time quotes and generate fresh AI insights for any stock symbol globally.</p>
             </div>
 
-            <div class="flex items-center space-x-2 bg-slate-900 p-2 rounded-xl border border-slate-800 focus-within:border-emerald-500 transition-colors">
+            <div class="flex items-center space-x-2 bg-white p-2 rounded-xl border border-slate-300 focus-within:border-finAccent focus-within:ring-1 focus-within:ring-finAccent shadow-sm transition-all">
                 <input
                         type="text"
                         id="liveSymbol"
                         placeholder="Enter company name or ticker (e.g. Visa, Apple, TSLA)..."
-                        class="w-full bg-transparent border-0 px-3 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-0 text-sm uppercase"
+                        class="w-full bg-transparent border-0 px-3 py-2 text-finText placeholder-slate-400 focus:outline-none focus:ring-0 text-sm uppercase"
                         onkeydown="if(event.key === 'Enter') performLiveAnalysis()"
+                        aria-label="Stock ticker or company name query input"
                 />
                 <button
                         id="liveCheckButton"
                         onclick="performLiveAnalysis()"
-                        class="bg-blue-600 hover:bg-blue-500 text-white font-medium text-sm px-6 py-2.5 rounded-lg transition-colors duration-150 flex-shrink-0"
+                        class="bg-finAccent hover:bg-finAccentHover text-white font-medium text-sm px-6 py-2.5 rounded-lg transition-colors duration-150 flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-finAccent"
+                        aria-label="Run live query analysis"
                 >
                     Run Live Check
                 </button>
             </div>
 
             <div id="liveResultContainer">
-                <div class="border border-dashed border-slate-800 rounded-xl p-12 text-center text-slate-500 text-sm">
+                <div class="border border-dashed border-slate-300 rounded-xl p-12 text-center text-slate-500 text-sm bg-white shadow-sm">
                     Results of live analysis will appear here.
                 </div>
             </div>
         </div>
 
-        <!-- Right: Ticker Management -->
-        <div class="space-y-6 bg-slate-900/50 p-6 rounded-2xl border border-slate-900">
-            <div class="space-y-1">
-                <h3 class="text-lg font-bold tracking-tight">Tracked Symbols</h3>
-                <p class="text-[10px] text-slate-500 font-mono uppercase tracking-widest">Scheduled Ingestion Pool</p>
+        <!-- Right: Ingestion Pool Tickers -->
+        <div class="w-full lg:w-[380px] min-w-[280px] max-w-[700px] shrink-0 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+            <div class="space-y-4">
+                <div class="space-y-1">
+                    <h3 class="text-lg font-bold tracking-tight text-finBlue">Tracked Symbols</h3>
+                    <p class="text-[10px] text-finSubtext font-mono uppercase tracking-widest">Scheduled Ingestion Pool</p>
+                </div>
+
+                <div id="tickerList" class="space-y-2 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
+                    <!-- Tickers dynamically loaded -->
+                </div>
             </div>
 
-            <div id="tickerList" class="space-y-2 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                <!-- Tickers dynamically loaded -->
-            </div>
-
-            <div class="pt-4 border-t border-slate-800">
-                <p class="text-xs text-slate-500 italic">Symbols in this list are automatically scanned every 3 hours for persistent trend analysis.</p>
+            <div class="pt-4 border-t border-slate-200 mt-6">
+                <p class="text-xs text-finSubtext italic">Symbols in this list are automatically scanned every 3 hours for persistent trend analysis.</p>
             </div>
         </div>
     </section>
 
 </main>
 
-<footer class="border-t border-slate-900 bg-slate-950/40 py-6 text-center text-xs text-slate-500 space-y-2 mt-auto">
-    <p>© 2026 CogniFlow. Powered by Gemini & Weaviate Cloud.</p>
-    <div>
-        <button onclick="toggleDiagnosticsDrawer()" class="text-slate-400 hover:text-emerald-400 font-mono transition-colors border border-slate-800 bg-slate-900 px-3 py-1.5 rounded-lg text-[10px] uppercase tracking-wider">
+<!-- Footer -->
+<footer class="border-t border-slate-200 bg-white py-8 text-center text-xs text-slate-500 space-y-4 mt-auto" role="contentinfo">
+    <!-- Expandable inline About Panel -->
+    <div class="max-w-2xl mx-auto border border-slate-200 bg-white rounded-xl overflow-hidden shadow-sm">
+        <button onclick="toggleAboutPanel()" class="w-full flex justify-between items-center px-5 py-3 hover:bg-slate-50 transition-colors text-xs font-semibold text-slate-700 uppercase focus:outline-none" aria-expanded="false" aria-label="Toggle inline detailed explanation about how CogniFlow works">
+            <span>How it Works & About CogniFlow</span>
+            <svg id="about-arrow" class="w-3.5 h-3.5 text-slate-500 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+        </button>
+        <div id="about-content" class="hidden border-t border-slate-150 p-5 text-left text-xs text-slate-650 space-y-3 leading-relaxed">
+            <p><strong>CogniFlow</strong> is an AI-powered Market Intelligence engine designed to capture, synthesize, and query financial trends.</p>
+            <p>Here is how the pipeline operates behind the scenes:</p>
+            <ul class="list-disc pl-5 space-y-1.5">
+                <li><strong>Ingestion Pool:</strong> The system automatically tracks a list of stock symbols (configured in the Live Ingestion Pool).</li>
+                <li><strong>Alpha Vantage Integration:</strong> The background processor retrieves the latest stock quotes and price snapshot metrics.</li>
+                <li><strong>Gemini 2.5 Flash:</strong> A generative AI process summarizes the trends into concise, qualitative vibes.</li>
+                <li><strong>Weaviate Vector DB:</strong> Insights are converted into mathematical vector representations (embeddings) and persisted.</li>
+                <li><strong>Hybrid Semantic Search:</strong> When you search, CogniFlow combines semantic vector matching and BM25 keywords to surface highly relevant matches instantly.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Troubleshooting Trigger / Clipboard Actions -->
+    <div class="flex flex-wrap justify-center gap-4 text-xs font-medium text-slate-650">
+        <button onclick="toggleDiagnosticsDrawer()" class="hover:text-finAccent transition-colors flex items-center space-x-1.5 focus:outline-none border border-slate-200 bg-slate-50 px-3 py-1.5 rounded-lg text-[10px] uppercase tracking-wider" aria-label="Open troubleshooting console drawer">
             ⚙️ Troubleshooting Console
         </button>
+        <span class="text-slate-300 self-center">|</span>
+        <button onclick="reportAppIssue()" class="hover:text-finAccent transition-colors flex items-center space-x-1.5 focus:outline-none" aria-label="Copy system diagnostics state configuration details to clipboard for debugging">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+            <span>Report Issue (Copy State)</span>
+        </button>
+        <span class="text-slate-300 self-center">|</span>
+        <button onclick="clearAllLocalData()" class="hover:text-red-500 transition-colors flex items-center space-x-1.5 focus:outline-none" aria-label="Reset all local states, caching, and tours">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+            <span>Clear Local Data</span>
+        </button>
     </div>
+    
+    <p class="select-none font-medium text-[10px] uppercase tracking-widest text-slate-400">© 2026 CogniFlow. Powered by Gemini & Weaviate Cloud.</p>
 </footer>
 
-<!-- Troubleshooting Logs Diagnostics Drawer -->
-<div id="diagnostics-drawer" class="fixed bottom-0 left-0 right-0 z-[90] bg-slate-900/95 border-t border-slate-800 backdrop-blur-md transform translate-y-full transition-transform duration-300 ease-out shadow-2xl">
+<!-- Diagnostics Drawer -->
+<div id="diagnostics-drawer" class="fixed bottom-0 left-0 right-0 z-[90] bg-slate-950/95 text-slate-100 border-t border-slate-800 backdrop-blur-md transform translate-y-full transition-transform duration-300 ease-out shadow-2xl" role="region" aria-label="System diagnostic logs panel">
     <div class="max-w-4xl mx-auto p-4 flex flex-col h-72">
-        <!-- Drawer Header -->
         <div class="flex justify-between items-center pb-3 border-b border-slate-800">
             <div class="flex items-center space-x-2">
                 <div class="h-2 w-2 rounded-full bg-amber-500 animate-ping"></div>
-                <h3 class="text-xs font-mono font-bold uppercase tracking-wider text-slate-300">Diagnostics & Error Console</h3>
+                <h3 class="text-xs font-mono font-bold uppercase tracking-wider text-slate-350">Diagnostics & Error Console</h3>
             </div>
             <div class="flex items-center space-x-3">
-                <button onclick="copyDiagnosticsLogs()" class="text-[10px] font-mono bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1 rounded transition-colors uppercase tracking-wider border border-slate-700">
+                <button onclick="copyDiagnosticsLogs()" class="text-[10px] font-mono bg-slate-900 hover:bg-slate-800 text-slate-200 px-2.5 py-1 rounded transition-colors uppercase tracking-wider border border-slate-700">
                     Copy Logs
                 </button>
                 <button onclick="clearDiagnosticsLogs()" class="text-[10px] font-mono bg-red-950/30 hover:bg-red-900/20 text-red-400 px-2.5 py-1 rounded transition-colors uppercase tracking-wider border border-red-900/30">
                     Clear Logs
                 </button>
-                <button onclick="toggleDiagnosticsDrawer()" class="text-slate-400 hover:text-slate-200 text-sm font-bold px-1.5">✕</button>
+                <button onclick="toggleDiagnosticsDrawer()" class="text-slate-400 hover:text-slate-200 text-sm font-bold px-1.5 focus:outline-none" aria-label="Close troubleshooting console">✕</button>
             </div>
         </div>
-        
-        <!-- Drawer Content (List of errors) -->
         <div id="diagnostics-log-list" class="flex-1 overflow-y-auto py-3 space-y-2 font-mono text-[10px] custom-scrollbar text-slate-400 text-left">
             <!-- Loaded dynamically -->
         </div>
     </div>
 </div>
 
-<!-- Onboarding Tour Container -->
-<div id="onboarding-tour" class="fixed inset-0 z-[100] hidden transition-all duration-300">
-    <!-- Backdrop overlay -->
+<!-- Onboarding Tour Tooltips -->
+<div id="onboarding-tour" class="fixed inset-0 z-[100] hidden transition-all duration-300" role="dialog" aria-modal="true" aria-label="Onboarding tour wizard">
     <div id="tour-overlay" onclick="skipTour()" class="absolute inset-0 bg-slate-950/60 backdrop-blur-[2px] transition-opacity duration-300 opacity-0 cursor-pointer"></div>
-    
-    <!-- Tooltip Card -->
-    <div id="tour-card" class="absolute bg-slate-900/95 backdrop-blur-md border border-slate-800/80 rounded-xl p-5 shadow-2xl shadow-emerald-950/20 max-w-sm w-[90vw] md:w-96 transition-all duration-300 ease-out opacity-0 translate-y-2 flex flex-col space-y-4">
-        <!-- Arrow -->
-        <div id="tour-arrow" class="absolute w-3 h-3 bg-slate-900 border-t border-l border-slate-800/80 rotate-45 -top-1.5 left-1/2 -translate-x-1/2"></div>
-        
-        <!-- Header / Step Indicator -->
+    <div id="tour-card" class="absolute bg-white border border-slate-250 rounded-xl p-5 shadow-2xl max-w-sm w-[90vw] md:w-96 transition-all duration-300 ease-out opacity-0 translate-y-2 flex flex-col space-y-4 text-finText text-left">
+        <div id="tour-arrow" class="absolute w-3 h-3 bg-white border-t border-l border-slate-250 rotate-45 -top-1.5 left-1/2 -translate-x-1/2"></div>
         <div class="flex justify-between items-center">
-            <span id="tour-step-title" class="text-xs font-semibold uppercase tracking-wider text-emerald-400">Welcome to CogniFlow</span>
-            <span id="tour-step-progress" class="text-[10px] font-mono text-slate-500">1 / 4</span>
+            <span id="tour-step-title" class="text-xs font-semibold uppercase tracking-wider text-finAccent">Welcome to CogniFlow</span>
+            <span id="tour-step-progress" class="text-[10px] font-mono text-slate-400">1 / 4</span>
         </div>
-        
-        <!-- Content -->
         <div class="space-y-2">
-            <h3 id="tour-title" class="text-base font-bold text-white leading-snug">Let's get you onboarded!</h3>
-            <p id="tour-description" class="text-xs text-slate-400 leading-relaxed"></p>
+            <h3 id="tour-title" class="text-base font-bold text-finBlue leading-snug">Let's get you onboarded!</h3>
+            <p id="tour-description" class="text-xs text-finSubtext leading-relaxed"></p>
         </div>
-        
-        <!-- Interactive Example Queries (Finance Focus) -->
-        <div id="tour-examples" class="hidden space-y-2 bg-slate-950/50 p-3 rounded-lg border border-slate-850">
-            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Click an example to run:</p>
+        <div id="tour-examples" class="hidden space-y-2 bg-slate-50 p-3 rounded-lg border border-slate-200">
+            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest select-none">Click an example to run:</p>
             <div class="flex flex-col space-y-1.5">
-                <button onclick="useExampleQuery('MSFT revenue trend')" class="text-left text-xs bg-slate-900 border border-slate-800/60 hover:border-emerald-500/50 hover:text-emerald-400 p-2 rounded transition-colors truncate">🔍 "MSFT revenue trend"</button>
-                <button onclick="useExampleQuery('AAPL news last week')" class="text-left text-xs bg-slate-900 border border-slate-800/60 hover:border-emerald-500/50 hover:text-emerald-400 p-2 rounded transition-colors truncate">🔍 "AAPL news last week"</button>
-                <button onclick="useExampleQuery('mild buying interest')" class="text-left text-xs bg-slate-900 border border-slate-800/60 hover:border-emerald-500/50 hover:text-emerald-400 p-2 rounded transition-colors truncate">🔍 "mild buying interest"</button>
+                <button onclick="useExampleQuery('MSFT revenue trend')" class="text-left text-xs bg-white border border-slate-200 hover:border-finAccent hover:text-finAccent p-2 rounded transition-colors truncate focus:outline-none focus:ring-1 focus:ring-finAccent">🔍 "MSFT revenue trend"</button>
+                <button onclick="useExampleQuery('AAPL news last week')" class="text-left text-xs bg-white border border-slate-200 hover:border-finAccent hover:text-finAccent p-2 rounded transition-colors truncate focus:outline-none focus:ring-1 focus:ring-finAccent">🔍 "AAPL news last week"</button>
+                <button onclick="useExampleQuery('mild buying interest')" class="text-left text-xs bg-white border border-slate-200 hover:border-finAccent hover:text-finAccent p-2 rounded transition-colors truncate focus:outline-none focus:ring-1 focus:ring-finAccent">🔍 "mild buying interest"</button>
             </div>
         </div>
-        
-        <!-- Footer Actions -->
-        <div class="flex justify-between items-center pt-2 border-t border-slate-800/40">
-            <button onclick="skipTour()" class="text-xs text-slate-500 hover:text-slate-300 transition-colors">Skip Tour</button>
+        <div class="flex justify-between items-center pt-2 border-t border-slate-100">
+            <button onclick="skipTour()" class="text-xs text-slate-400 hover:text-slate-650 transition-colors focus:outline-none focus:underline">Skip Tour</button>
             <div class="flex space-x-2">
-                <button id="tour-btn-prev" onclick="prevTourStep()" class="text-xs border border-slate-800 bg-slate-950 hover:bg-slate-900 text-slate-300 px-3 py-1.5 rounded-lg transition-colors hidden">Back</button>
-                <button id="tour-btn-next" onclick="nextTourStep()" class="text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-4 py-1.5 rounded-lg transition-colors shadow-lg shadow-emerald-950/30">Next</button>
+                <button id="tour-btn-prev" onclick="prevTourStep()" class="text-xs border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 px-3 py-1.5 rounded-lg transition-colors hidden focus:outline-none">Back</button>
+                <button id="tour-btn-next" onclick="nextTourStep()" class="text-xs bg-finAccent hover:bg-finAccentHover text-white font-semibold px-4 py-1.5 rounded-lg transition-colors shadow-sm focus:outline-none">Next</button>
             </div>
         </div>
     </div>
@@ -282,6 +388,436 @@
     let cachedPipelineData = null;
     const tickerRefreshErrors = {};
     let isDiagnosticsOpen = false;
+    let currentSearchResults = [];
+    let selectedInsight = null;
+    let isAboutExpanded = false;
+
+    // Draggable Resizer Logic
+    let isResizing = false;
+    let startX = 0;
+    let startWidth = 0;
+
+    // --- ROTATING PLACEHOLDERS ---
+    const placeholders = [
+        'Try: "Microsoft recent AI investments"',
+        'Try: "Apple Q3 revenue vs analyst estimates"',
+        'Try: "IBM hybrid cloud growth"',
+        'Try: "bullish tech stocks"',
+        'Try: "companies with positive vibe"'
+    ];
+    let placeholderIndex = 0;
+
+    // --- INITIALIZATION ---
+    window.onload = () => {
+        loadTrackedTickers();
+        initOnboarding();
+        initPipelineSummary();
+        initPlaceholderRotation();
+        renderRecentSearches();
+        populateSymbolDropdown();
+        initSplitter();
+    };
+
+    function initPlaceholderRotation() {
+        const input = document.getElementById('searchQuery');
+        if (!input) return;
+        setInterval(() => {
+            if (document.activeElement !== input) {
+                placeholderIndex = (placeholderIndex + 1) % placeholders.length;
+                input.placeholder = placeholders[placeholderIndex];
+            }
+        }, 3000);
+    }
+
+    // Draggable Resizer Initialization
+    function initSplitter() {
+        const splitter = document.getElementById('panel-splitter');
+        const panel = document.getElementById('analysis-panel');
+        if (!splitter || !panel) return;
+
+        splitter.addEventListener('mousedown', (e) => {
+            isResizing = true;
+            startX = e.clientX;
+            startWidth = panel.offsetWidth;
+            document.body.classList.add('select-none');
+            document.body.style.cursor = 'col-resize';
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isResizing) return;
+            const deltaX = startX - e.clientX;
+            const newWidth = startWidth + deltaX;
+            if (newWidth >= 280 && newWidth <= 700) {
+                panel.style.width = `${newWidth}px`;
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (isResizing) {
+                isResizing = false;
+                document.body.classList.remove('select-none');
+                document.body.style.cursor = '';
+            }
+        });
+    }
+
+    // Keyboard handlers & Escape close
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            if (isDiagnosticsOpen) {
+                toggleDiagnosticsDrawer();
+            }
+            const onboarding = document.getElementById('onboarding-tour');
+            if (onboarding && !onboarding.classList.contains('hidden')) {
+                completeTour();
+            }
+        }
+    });
+
+    // --- DEBOUNCED SEARCH-ON-TYPE ---
+    let debounceTimeout = null;
+    function handleSearchInput() {
+        const query = document.getElementById('searchQuery').value.trim();
+        clearTimeout(debounceTimeout);
+        
+        if (!query) {
+            document.getElementById('resultsGrid').innerHTML = `
+                <div class="col-span-full border border-dashed border-slate-350 rounded-xl p-12 text-center text-slate-500 text-sm bg-white shadow-sm">
+                    Enter a query in the search bar above to interrogate the vector cluster.
+                </div>
+            `;
+            document.getElementById('resultCount').innerText = '0 records fetched';
+            return;
+        }
+
+        if (query.length >= 3) {
+            debounceTimeout = setTimeout(() => {
+                executeSearch();
+            }, 300);
+        }
+    }
+
+    // --- RECENT SEARCHES ---
+    function saveRecentSearch(query) {
+        if (!query) return;
+        try {
+            let recents = JSON.parse(localStorage.getItem('cogniflow-recents') || '[]');
+            recents = recents.filter(r => r.toLowerCase() !== query.toLowerCase());
+            recents.unshift(query);
+            recents = recents.slice(0, 5); // Max 5 chips
+            localStorage.setItem('cogniflow-recents', JSON.stringify(recents));
+            renderRecentSearches();
+        } catch (e) {
+            console.error('Failed to save query caching', e);
+        }
+    }
+
+    function renderRecentSearches() {
+        const container = document.getElementById('recent-searches-container');
+        if (!container) return;
+        try {
+            const recents = JSON.parse(localStorage.getItem('cogniflow-recents') || '[]');
+            if (recents.length === 0) {
+                container.innerHTML = '<span class="text-xs text-slate-400 italic select-none">No queries cached</span>';
+                return;
+            }
+            container.innerHTML = recents.map(r => `
+                <button onclick="useRecentQuery('${r.replace(/'/g, "\\'")}')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1 rounded-full border border-slate-350 transition-colors flex items-center space-x-1 focus:outline-none focus:ring-1 focus:ring-finAccent">
+                    <span>${r}</span>
+                </button>
+            `).join('');
+        } catch (e) {
+            container.innerHTML = '';
+        }
+    }
+
+    function useRecentQuery(query) {
+        document.getElementById('searchQuery').value = query;
+        executeSearch();
+    }
+
+    // --- SYMBOL FILTERING DROPDOWN ---
+    async function populateSymbolDropdown() {
+        const dropdown = document.getElementById('symbolFilter');
+        if (!dropdown) return;
+        try {
+            const response = await fetch('/api/tickers');
+            const tickers = await response.json();
+            dropdown.innerHTML = '<option value="ALL">All Symbols</option>';
+            tickers.forEach(t => {
+                dropdown.innerHTML += `<option value="${t.toUpperCase()}">${t.toUpperCase()}</option>`;
+            });
+        } catch (e) {
+            console.error('Failed to populate dropdown filter', e);
+        }
+    }
+
+    function filterResultsBySymbol() {
+        const selected = document.getElementById('symbolFilter').value;
+        let filtered = currentSearchResults;
+        if (selected !== 'ALL') {
+            filtered = currentSearchResults.filter(item => item.symbol.toUpperCase() === selected);
+        }
+        renderResultCards(filtered);
+    }
+
+    function renderResultCards(items) {
+        const grid = document.getElementById('resultsGrid');
+        if (!grid) return;
+        
+        if (items.length === 0) {
+            grid.innerHTML = `
+                <div class="col-span-full border border-dashed border-slate-300 rounded-xl p-12 text-center text-slate-500 text-sm bg-white shadow-sm">
+                    No results match the selected ticker filter.
+                </div>
+            `;
+            return;
+        }
+
+        const query = document.getElementById('searchQuery').value.trim();
+
+        grid.innerHTML = items.map((item, index) => {
+            const relevanceScore = calculateRelevance(item.insight, query);
+            const stars = getStarsHtml(relevanceScore);
+            const formattedDate = formatDateTime(item.timestamp);
+            const spotPrice = parseFloat(item.price).toFixed(2);
+            
+            const escapedItem = JSON.stringify(item).replace(/"/g, '&quot;');
+
+            return `
+                <div 
+                    onclick="selectInsightCard(this, ${escapedItem})"
+                    onkeydown="if(event.key === 'Enter' || event.key === ' ') { event.preventDefault(); selectInsightCard(this, ${escapedItem}); }"
+                    class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm hover:shadow-md hover:border-finAccent transition-all duration-200 cursor-pointer flex flex-col justify-between space-y-4 text-left relative group focus:outline-none focus:ring-2 focus:ring-finAccent"
+                    tabindex="0"
+                    aria-label="Result card for ${item.symbol}, price ${spotPrice}, relevance ${relevanceScore} percent"
+                >
+                    <div class="flex justify-between items-start">
+                        <div class="space-y-1">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-sm font-bold text-finBlue bg-slate-100 px-2.5 py-1 rounded-md tracking-tight">${item.symbol}</span>
+                                <span class="text-xs font-semibold text-emerald-600 font-mono">$${spotPrice}</span>
+                            </div>
+                            <div class="text-[10px] font-mono text-slate-400 uppercase tracking-wider">${formattedDate}</div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button 
+                                onclick="event.stopPropagation(); copyText('${item.insight.replace(/'/g, "\\'")}')" 
+                                class="text-slate-400 hover:text-finAccent p-1 hover:bg-slate-100 rounded transition-colors focus:outline-none focus:ring-2 focus:ring-finAccent"
+                                title="Copy Insight Content"
+                                aria-label="Copy insight text to clipboard"
+                            >
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <p class="text-xs text-finText leading-relaxed line-clamp-3 select-text" style="line-height: 1.5;">
+                        ${item.insight}
+                    </p>
+
+                    <div class="flex items-center justify-between pt-3 border-t border-slate-100 text-[10px] select-none">
+                        <div class="flex items-center space-x-1">
+                            <span class="font-semibold text-slate-500">Relevance:</span>
+                            <span class="font-bold text-finAccent font-mono">${relevanceScore}%</span>
+                        </div>
+                        <div class="flex text-amber-400" aria-label="${Math.round(relevanceScore/20)} stars out of 5">
+                            ${stars}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function calculateRelevance(text, query) {
+        if (!query) return 85;
+        const terms = query.toLowerCase().split(/\s+/).filter(t => t.length > 2);
+        if (terms.length === 0) return 85;
+        let matches = 0;
+        const lowerText = text.toLowerCase();
+        terms.forEach(t => {
+            if (lowerText.includes(t)) matches++;
+        });
+        const score = 75 + Math.round((matches / terms.length) * 24);
+        return Math.min(score, 99);
+    }
+
+    function getStarsHtml(score) {
+        const starsCount = Math.round(score / 20); // 1-5 stars
+        let html = '';
+        for (let i = 1; i <= 5; i++) {
+            if (i <= starsCount) {
+                html += '★';
+            } else {
+                html += '☆';
+            }
+        }
+        return html;
+    }
+
+    // --- MASTER DETAIL (AI PANEL ACTION HANDLERS) ---
+    function selectInsightCard(cardElement, item) {
+        const allCards = document.querySelectorAll('#resultsGrid > div');
+        allCards.forEach(c => {
+            c.classList.remove('border-finAccent', 'ring-1', 'ring-finAccent', 'shadow-md');
+            c.classList.add('border-slate-200');
+        });
+        
+        cardElement.classList.add('border-finAccent', 'ring-1', 'ring-finAccent', 'shadow-md');
+        cardElement.classList.remove('border-slate-200');
+        
+        selectedInsight = item;
+        renderAnalysisPanel();
+    }
+
+    function renderAnalysisPanel() {
+        const bodyContainer = document.getElementById('analysis-panel-body');
+        if (!bodyContainer) return;
+        
+        if (!selectedInsight) {
+            bodyContainer.innerHTML = `
+                <div class="flex-1 flex flex-col justify-center items-center text-center p-8 text-slate-400 space-y-3" id="analysis-placeholder">
+                    <svg class="w-12 h-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
+                    <p class="text-xs font-medium leading-relaxed">Select an insight card from the search results on the left to read its full AI summary and perform analysis.</p>
+                </div>
+            `;
+            return;
+        }
+        
+        const text = selectedInsight.insight;
+        const tokens = Math.round(text.length / 4);
+        const formattedDate = formatDateTime(selectedInsight.timestamp);
+        
+        bodyContainer.innerHTML = `
+            <div class="flex-1 flex flex-col justify-between space-y-5 h-full text-left">
+                <div class="space-y-4">
+                    <div class="flex justify-between items-start border-b border-slate-100 pb-3">
+                        <div>
+                            <h4 class="text-2xl font-black text-finBlue tracking-tight">${selectedInsight.symbol}</h4>
+                            <span class="text-[10px] font-mono text-slate-500 uppercase tracking-widest">${formattedDate}</span>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-[9px] font-mono text-slate-500 block uppercase">Spot Price</span>
+                            <span class="text-lg font-bold text-emerald-600 font-mono">$${parseFloat(selectedInsight.price).toFixed(2)}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="prose prose-slate max-w-none">
+                        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-450 mb-1.5 select-none">AI Market vibe Check</p>
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 text-sm text-slate-700 leading-relaxed font-normal whitespace-pre-wrap select-text leading-6">
+                            ${text}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="space-y-4 pt-4 border-t border-slate-100 mt-auto">
+                    <div class="bg-slate-50 border border-slate-200 rounded-lg p-3 flex justify-between items-center text-[10px] font-mono text-slate-500 select-none">
+                        <div>Usage: <span class="text-slate-800 font-bold">${tokens} tokens</span></div>
+                        <div>Cost: <span class="text-emerald-600 font-bold">$0.0000 (Free)</span></div>
+                    </div>
+                    
+                    <div class="flex gap-3">
+                        <button onclick="copyInsightToClipboard()" class="flex-1 flex items-center justify-center space-x-1.5 bg-finAccent hover:bg-finAccentHover text-white text-xs font-semibold py-2 px-3 rounded-lg transition-colors focus:outline-none focus:ring-1 focus:ring-finAccent">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+                            <span>Copy Output</span>
+                        </button>
+                        <button onclick="exportInsightTxtFile()" class="flex-1 flex items-center justify-center space-x-1.5 border border-slate-350 hover:bg-slate-50 text-slate-700 text-xs font-semibold py-2 px-3 rounded-lg transition-colors focus:outline-none">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                            <span>Export .txt</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function copyInsightToClipboard() {
+        if (!selectedInsight) return;
+        navigator.clipboard.writeText(selectedInsight.insight).then(() => {
+            alert('📋 AI Analysis summary copied to clipboard!');
+        }).catch(() => {
+            alert('Failed to copy text.');
+        });
+    }
+
+    function exportInsightTxtFile() {
+        if (!selectedInsight) return;
+        exportInsightAsTxt(selectedInsight.symbol, formatDateTime(selectedInsight.timestamp), selectedInsight.price, selectedInsight.insight);
+    }
+
+    function exportInsightAsTxt(symbol, timestamp, price, insight) {
+        const textContent = `COGNIFLOW MARKET INTELLIGENCE REPORT
+====================================
+Ticker Symbol: ${symbol}
+Timestamp:     ${timestamp}
+Spot Price:    $${price}
+------------------------------------
+AI Market Pulse Insight:
+${insight}
+====================================
+Generated via CogniFlow Service (Gemini & Weaviate Vector DB)
+`;
+        const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `cogniflow_${symbol}_${new Date().toISOString().slice(0, 10)}.txt`;
+        link.click();
+        URL.revokeObjectURL(link.href);
+    }
+
+    // --- FOOTER ABOUT PANEL ---
+    function toggleAboutPanel() {
+        const content = document.getElementById('about-content');
+        const arrow = document.getElementById('about-arrow');
+        const btn = document.querySelector('button[onclick="toggleAboutPanel()"]');
+        isAboutExpanded = !isAboutExpanded;
+        if (isAboutExpanded) {
+            content.classList.remove('hidden');
+            arrow.classList.add('rotate-180');
+            btn.setAttribute('aria-expanded', 'true');
+        } else {
+            content.classList.add('hidden');
+            arrow.classList.remove('rotate-180');
+            btn.setAttribute('aria-expanded', 'false');
+        }
+    }
+
+    // --- REPORT ISSUE STATE ---
+    function reportAppIssue() {
+        try {
+            const state = {
+                timestamp: new Date().toISOString(),
+                currentTab: currentTab,
+                searchQuery: document.getElementById('searchQuery')?.value || '',
+                liveSymbol: document.getElementById('liveSymbol')?.value || '',
+                recentSearches: JSON.parse(localStorage.getItem('cogniflow-recents') || '[]'),
+                localErrors: JSON.parse(localStorage.getItem('cogniflow-errors') || '[]'),
+                onboardingDone: localStorage.getItem('cogniflow-onboarding-done') || 'false',
+                navigator: {
+                    userAgent: navigator.userAgent,
+                    language: navigator.language,
+                    platform: navigator.platform
+                }
+            };
+            navigator.clipboard.writeText(JSON.stringify(state, null, 2)).then(() => {
+                alert('⚙️ System diagnostics state copied to clipboard successfully! You can paste it into your report.');
+            }).catch(() => {
+                alert('Failed to copy state to clipboard. Please view console.');
+            });
+        } catch (e) {
+            alert('Failed to gather diagnostics details.');
+        }
+    }
+
+    // --- CLEAR LOCAL STORAGE STATES ---
+    function clearAllLocalData() {
+        localStorage.removeItem('cogniflow-recents');
+        localStorage.removeItem('cogniflow-errors');
+        localStorage.removeItem('cogniflow-onboarding-done');
+        alert('🧹 All local cached states (tours, diagnostics errors, and recents) have been cleared.');
+        location.reload();
+    }
 
     // --- DIAGNOSTICS & ERROR LOGGING ---
     function pushLocalError(errorMsg, context) {
@@ -317,12 +853,12 @@
             const logs = rawLogs ? JSON.parse(rawLogs) : [];
 
             if (logs.length === 0) {
-                listContainer.innerHTML = `<p class="text-slate-650 italic text-center py-8">Console empty. No troubleshooting exceptions recorded.</p>`;
+                listContainer.innerHTML = `<p class="text-slate-550 italic text-center py-8">Console empty. No troubleshooting exceptions recorded.</p>`;
                 return;
             }
 
             listContainer.innerHTML = logs.map((log, index) => `
-                <div class="border border-slate-800/80 bg-slate-950/30 p-2.5 rounded-lg flex flex-col space-y-1">
+                <div class="border border-slate-800 bg-slate-900 p-2.5 rounded-lg flex flex-col space-y-1">
                     <div class="flex justify-between items-center text-slate-500">
                         <span>[${index + 1}] Context: ${log.context}</span>
                         <span>${new Date(log.timestamp).toLocaleString()}</span>
@@ -363,7 +899,7 @@
             navigator.clipboard.writeText(logText).then(() => {
                 alert('Diagnostics logs copied to clipboard.');
             }).catch(() => {
-                alert('Clipboard copy failed. Please select and copy manually.');
+                alert('Clipboard copy failed.');
             });
         } catch (e) {
             alert('Failed to copy logs.');
@@ -392,13 +928,6 @@
         }
     }
 
-    // --- INITIALIZATION ---
-    window.onload = () => {
-        loadTrackedTickers();
-        initOnboarding();
-        initPipelineSummary();
-    };
-
     function switchTab(tab) {
         currentTab = tab;
         const searchSec = document.getElementById('section-search');
@@ -409,17 +938,21 @@
         if (tab === 'search') {
             searchSec.classList.remove('hidden');
             liveSec.classList.add('hidden');
-            searchTab.classList.add('border-emerald-500', 'text-emerald-500');
+            searchTab.classList.add('border-finAccent', 'text-finAccent');
             searchTab.classList.remove('border-transparent', 'text-slate-500');
             liveTab.classList.add('border-transparent', 'text-slate-500');
-            liveTab.classList.remove('border-emerald-500', 'text-emerald-500');
+            liveTab.classList.remove('border-finAccent', 'text-finAccent');
+            searchTab.setAttribute('aria-selected', 'true');
+            liveTab.setAttribute('aria-selected', 'false');
         } else {
             searchSec.classList.add('hidden');
             liveSec.classList.remove('hidden');
-            liveTab.classList.add('border-emerald-500', 'text-emerald-500');
+            liveTab.classList.add('border-finAccent', 'text-finAccent');
             liveTab.classList.remove('border-transparent', 'text-slate-500');
             searchTab.classList.add('border-transparent', 'text-slate-500');
-            searchTab.classList.remove('border-emerald-500', 'text-emerald-500');
+            searchTab.classList.remove('border-finAccent', 'text-finAccent');
+            searchTab.setAttribute('aria-selected', 'false');
+            liveTab.setAttribute('aria-selected', 'true');
             loadTrackedTickers();
         }
     }
@@ -432,14 +965,14 @@
             const tickers = await response.json();
 
             if (tickers.length === 0) {
-                container.innerHTML = `<p class="text-xs text-slate-600 text-center py-4">No tickers currently tracked.</p>`;
+                container.innerHTML = `<p class="text-xs text-slate-400 text-center py-4 select-none">No tickers currently tracked.</p>`;
                 return;
             }
 
             container.innerHTML = tickers.map(t => `
-                <div class="flex justify-between items-center bg-slate-950 border border-slate-800 px-4 py-3 rounded-lg group">
-                    <span class="font-bold text-white tracking-tight">${t}</span>
-                    <button onclick="removeTicker('${t}')" class="text-slate-600 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100">
+                <div class="flex justify-between items-center bg-slate-50 border border-slate-200 px-4 py-3 rounded-lg group">
+                    <span class="font-bold text-finBlue tracking-tight">${t}</span>
+                    <button onclick="removeTicker('${t}')" class="text-slate-400 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100" aria-label="Remove ticker ${t} from tracking list">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                     </button>
                 </div>
@@ -453,6 +986,7 @@
         try {
             await fetch(`/api/tickers/${symbol}`, { method: 'POST' });
             loadTrackedTickers();
+            populateSymbolDropdown();
         } catch (e) { alert('Failed to add ticker'); }
     }
 
@@ -460,6 +994,7 @@
         try {
             await fetch(`/api/tickers/${symbol}`, { method: 'DELETE' });
             loadTrackedTickers();
+            populateSymbolDropdown();
         } catch (e) { alert('Failed to remove ticker'); }
     }
 
@@ -472,26 +1007,24 @@
 
         if (!symbol) return;
 
-        // Set button loading state
         checkBtn.disabled = true;
         checkBtn.classList.add('opacity-50', 'cursor-not-allowed');
         const originalBtnText = checkBtn.innerText;
         checkBtn.innerText = 'Analyzing...';
 
-        // Pulsing Dots Skeleton Loader
         container.innerHTML = `
-            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-8 space-y-6 animate-pulse">
+            <div class="bg-white border border-slate-200 rounded-2xl p-8 space-y-6 animate-pulse">
                 <div class="flex justify-between items-start">
                     <div class="space-y-2 w-1/3">
-                        <div class="h-8 bg-slate-850 rounded"></div>
-                        <div class="h-4 bg-slate-850 rounded w-1/2"></div>
+                        <div class="h-8 bg-slate-200 rounded"></div>
+                        <div class="h-4 bg-slate-200 rounded w-1/2"></div>
                     </div>
-                    <div class="w-1/4 h-12 bg-slate-850 rounded"></div>
+                    <div class="w-1/4 h-12 bg-slate-200 rounded"></div>
                 </div>
-                <div class="space-y-3 pt-4 border-t border-slate-800">
-                    <div class="h-4 bg-slate-850 rounded"></div>
-                    <div class="h-4 bg-slate-850 rounded w-5/6"></div>
-                    <div class="h-4 bg-slate-850 rounded w-2/3"></div>
+                <div class="space-y-3 pt-4 border-t border-slate-100">
+                    <div class="h-4 bg-slate-200 rounded"></div>
+                    <div class="h-4 bg-slate-200 rounded w-5/6"></div>
+                    <div class="h-4 bg-slate-200 rounded w-2/3"></div>
                 </div>
                 <div class="text-center text-xs font-mono text-slate-500 uppercase tracking-widest pt-2">
                     🧠 Analyzing ticker data... Please wait...
@@ -500,7 +1033,7 @@
         `;
 
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s timeout
+        const timeoutId = setTimeout(() => controller.abort(), 20000);
 
         try {
             const response = await fetch(`/api/insights/live/${symbol}`, { signal: controller.signal });
@@ -516,32 +1049,32 @@
             }
 
             container.innerHTML = `
-                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-8 space-y-6">
-                    <div class="flex justify-between items-start">
+                <div class="bg-white border border-slate-200 rounded-2xl p-8 space-y-6 shadow-sm text-left">
+                    <div class="flex justify-between items-start border-b border-slate-100 pb-4">
                         <div class="space-y-1">
-                            <h3 class="text-4xl font-black text-white tracking-tighter">${data.symbol}</h3>
-                            <p class="text-xs font-mono text-slate-500 uppercase tracking-widest">${data.timestamp}</p>
+                            <h3 class="text-4xl font-black text-finBlue tracking-tighter">${data.symbol}</h3>
+                            <p class="text-xs font-mono text-slate-400 uppercase tracking-widest">${formatDateTime(data.timestamp)}</p>
                         </div>
                         <div class="text-right space-y-1">
                             <span class="text-xs font-mono text-slate-500 block uppercase">Spot Price</span>
-                            <span class="text-3xl font-bold font-mono text-emerald-400">$${parseFloat(data.price).toFixed(2)}</span>
+                            <span class="text-3xl font-bold font-mono text-emerald-600">$${parseFloat(data.price).toFixed(2)}</span>
                         </div>
                     </div>
                     
-                    <div class="bg-slate-950 p-6 rounded-xl border border-slate-800/50">
-                        <div class="flex items-center space-x-2 mb-3">
-                             <div class="h-1.5 w-1.5 rounded-full bg-blue-500"></div>
-                             <span class="text-[10px] font-mono text-slate-500 uppercase tracking-widest">AI Market Pulse (Gemini)</span>
+                    <div class="bg-slate-50 p-6 rounded-xl border border-slate-200">
+                        <div class="flex items-center space-x-2 mb-3 select-none">
+                             <div class="h-1.5 w-1.5 rounded-full bg-finAccent"></div>
+                             <span class="text-[10px] font-mono text-finSubtext uppercase tracking-widest">AI Market Pulse (Gemini)</span>
                         </div>
-                        <p class="text-slate-200 leading-relaxed">${data.insight}</p>
+                        <p class="text-slate-700 leading-relaxed font-normal leading-6">${data.insight}</p>
                     </div>
 
-                    <div class="flex justify-between items-center">
+                    <div class="flex justify-between items-center pt-2">
                         <div class="flex space-x-4">
-                            <button onclick="addTicker('${data.symbol}')" class="text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 px-4 rounded-lg transition-all">Track Symbol</button>
-                            <button onclick="removeTicker('${data.symbol}')" class="text-xs border border-slate-800 hover:border-red-900 hover:text-red-400 text-slate-400 font-bold py-2.5 px-4 rounded-lg transition-all">Untrack</button>
+                            <button onclick="addTicker('${data.symbol}')" class="text-xs bg-finAccent hover:bg-finAccentHover text-white font-bold py-2.5 px-4 rounded-lg transition-all focus:outline-none">Track Symbol</button>
+                            <button onclick="removeTicker('${data.symbol}')" class="text-xs border border-slate-350 hover:bg-red-50 hover:text-red-600 text-slate-700 font-bold py-2.5 px-4 rounded-lg transition-all focus:outline-none">Untrack</button>
                         </div>
-                        <span class="text-[10px] font-mono text-slate-600">Saved to Weaviate Memory</span>
+                        <span class="text-[10px] font-mono text-slate-400 select-none">Saved to Weaviate Memory</span>
                     </div>
                 </div>
             `;
@@ -557,15 +1090,14 @@
                 isRetryable = false;
             }
 
-            // Save to localStorage diagnostics
             pushLocalError(error.message || 'AnalysisError', `performLiveAnalysis: ${symbol}`);
 
             container.innerHTML = `
-                <div class="border border-amber-900/30 bg-amber-950/20 text-amber-400 rounded-xl p-6 text-center text-sm space-y-4 flex flex-col items-center">
+                <div class="border border-amber-200 bg-amber-50 text-amber-800 rounded-xl p-6 text-center text-sm space-y-4 flex flex-col items-center">
                     <span>${userFriendlyMsg}</span>
                     <div class="flex space-x-3">
                         ${isRetryable ? `<button onclick="performLiveAnalysis()" class="bg-amber-600 hover:bg-amber-500 text-white font-medium text-xs px-4 py-2 rounded-lg transition-colors">Retry</button>` : ''}
-                        <button onclick="dismissLiveAnalysisError()" class="border border-amber-800 text-amber-300 hover:bg-amber-900/30 font-medium text-xs px-4 py-2 rounded-lg transition-colors">Dismiss</button>
+                        <button onclick="dismissLiveAnalysisError()" class="border border-slate-350 bg-white text-slate-700 hover:bg-slate-50 font-medium text-xs px-4 py-2 rounded-lg transition-colors">Dismiss</button>
                     </div>
                 </div>
             `;
@@ -579,13 +1111,13 @@
     function dismissLiveAnalysisError() {
         const container = document.getElementById('liveResultContainer');
         container.innerHTML = `
-            <div class="border border-dashed border-slate-800 rounded-xl p-12 text-center text-slate-500 text-sm">
+            <div class="border border-dashed border-slate-300 rounded-xl p-12 text-center text-slate-500 text-sm bg-white shadow-sm">
                 Results of live analysis will appear here.
             </div>
         `;
     }
 
-    // --- MEMORY SEARCH ---
+    // --- MEMORY SEARCH EXECUTION ---
     function applyPill(phrase) {
         document.getElementById('searchQuery').value = phrase;
         executeSearch();
@@ -601,10 +1133,8 @@
 
         if (!queryInput) return;
 
-        // Reset error state
         dismissSearchError();
 
-        // Set loading state
         searchBtn.disabled = true;
         searchBtn.classList.add('opacity-50', 'cursor-not-allowed');
         const originalBtnText = searchBtnText.innerHTML;
@@ -619,14 +1149,16 @@
 
         resultsGrid.innerHTML = `
             <div class="col-span-full py-12 flex flex-col items-center justify-center space-y-3">
-                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
-                <p class="text-xs text-slate-400 font-mono">Running hybrid semantic and keyword search mapping...</p>
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-finAccent"></div>
+                <p class="text-xs text-slate-500 font-mono">Running hybrid semantic and keyword search mapping...</p>
             </div>
         `;
 
         const isHybrid = document.getElementById('hybridToggle').checked;
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 15000);
+        
+        const startTime = performance.now();
 
         try {
             const response = await fetch(`/api/insights/search?query=${encodeURIComponent(queryInput)}&limit=6&hybrid=${isHybrid}`, { signal: controller.signal });
@@ -641,48 +1173,36 @@
             }
 
             const data = await response.json();
-            resultCount.innerText = `${data.length} records fetched`;
+            currentSearchResults = data;
+            
+            const endTime = performance.now();
+            const duration = ((endTime - startTime) / 1000).toFixed(2);
+            resultCount.innerText = `Found ${data.length} results in ${duration}s`;
 
             if (data.length === 0) {
-                showSearchError('🔍 No relevant insights found. Try different keywords or check if data has been ingested for this symbol.', false);
-                resultsGrid.innerHTML = `<div class="col-span-full border border-dashed border-slate-800 rounded-xl p-12 text-center text-slate-500 text-sm">Zero matching vectors recovered.</div>`;
+                showSearchError('🔍 No relevant insights found. Try different keywords.', false);
+                resultsGrid.innerHTML = `<div class="col-span-full border border-dashed border-slate-300 rounded-xl p-12 text-center text-slate-500 text-sm bg-white shadow-sm">Zero matching vectors recovered.</div>`;
                 return;
             }
 
-            resultsGrid.innerHTML = data.map(item => `
-                <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 hover:border-slate-700 transition-all duration-200 flex flex-col justify-between group">
-                    <div class="space-y-3">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <span class="text-2xl font-black tracking-tight text-white group-hover:text-emerald-400 transition-colors">${item.symbol}</span>
-                                <span class="block text-[10px] font-mono text-slate-500 mt-0.5 uppercase">${item.timestamp}</span>
-                            </div>
-                            <div class="bg-slate-950 px-2.5 py-1 rounded text-right border border-slate-800/80">
-                                <span class="text-[9px] font-mono block text-slate-500 uppercase">Snapshot</span>
-                                <span class="text-sm font-bold font-mono text-emerald-400">$${parseFloat(item.price).toFixed(2)}</span>
-                            </div>
-                        </div>
-                        <p class="text-xs text-slate-400 leading-relaxed pt-1 line-clamp-3">${item.insight}</p>
-                    </div>
-                </div>
-            `).join('');
+            // Render all matching results initially
+            filterResultsBySymbol(); // Triggers display matching current symbol selection
 
         } catch (error) {
             clearTimeout(timeoutId);
-            let userFriendlyMsg = '⚠️ Unable to connect to server. Please check your internet connection and try again.';
+            let userFriendlyMsg = '⚠️ Unable to connect to server. Please check your internet connection.';
             let isRetryable = true;
 
             if (error.name === 'AbortError' || error.message === '5XX_SERVER_ERROR') {
                 userFriendlyMsg = '⏱️ The server is taking too long to respond. Please retry in a few moments.';
-            } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError') || error.message.includes('Failed to connect')) {
-                userFriendlyMsg = '⚠️ Unable to connect to server. Please check your internet connection and try again.';
+            } else if (error.message.includes('Failed to fetch')) {
+                userFriendlyMsg = '⚠️ Unable to connect to server. Please check your connection.';
             }
 
-            // Save to localStorage diagnostics
             pushLocalError(error.message || 'NetworkError', 'executeSearch');
-
             showSearchError(userFriendlyMsg, isRetryable);
-            resultsGrid.innerHTML = `<div class="col-span-full border border-dashed border-red-950/20 bg-red-950/5 rounded-xl p-12 text-center text-slate-500 text-sm">Search layer unavailable.</div>`;
+            
+            resultsGrid.innerHTML = `<div class="col-span-full border border-dashed border-red-200 bg-red-50 rounded-xl p-12 text-center text-slate-500 text-sm">Search layer unavailable.</div>`;
             resultCount.innerText = `Error`;
         } finally {
             searchBtn.disabled = false;
@@ -692,20 +1212,28 @@
         }
     }
 
+    function copyText(val) {
+        navigator.clipboard.writeText(val).then(() => {
+            alert('📋 Insight text copied to clipboard!');
+        }).catch(() => {
+            alert('Failed to copy text.');
+        });
+    }
+
     // --- ONBOARDING TOUR LOGIC ---
     let tourStep = 0;
     const tourSteps = [
         {
             title: "Welcome to CogniFlow 🚀",
             stepTitle: "Welcome",
-            description: "CogniFlow is an AI-powered Market Intelligence engine. It fetches financial data, embeds insights into a vector database, and lets you query market vibes using natural language. Let's take a quick 1-minute tour!",
+            description: "CogniFlow is an AI-powered Market Intelligence engine. It automatically ingests financial quotes, embeds insights into a vector database, and lets you query market sentiment using natural language. Let's take a quick 1-minute tour!",
             target: null,
             placement: 'center'
         },
         {
             title: "Interrogate Vector Memory",
             stepTitle: "Step 1 of 3",
-            description: "Type natural language queries here to search analyzed stock vibe checks in Weaviate. We've prepared some sample queries below for you to try!",
+            description: "Type natural language queries here to search analyzed stock insights. We've prepared some sample queries below for you to try!",
             target: "searchQuery",
             placement: 'bottom',
             showExamples: true
@@ -729,7 +1257,7 @@
     function initOnboarding() {
         const tourDone = localStorage.getItem('cogniflow-onboarding-done');
         if (!tourDone) {
-            setTimeout(startTour, 600); // Small delay for visual entry
+            setTimeout(startTour, 600);
         }
     }
 
@@ -740,8 +1268,6 @@
         const card = document.getElementById('tour-card');
         
         container.classList.remove('hidden');
-        
-        // Trigger reflow for transition
         void container.offsetWidth;
         
         overlay.classList.remove('opacity-0');
@@ -757,13 +1283,11 @@
         tourStep = index;
         const step = tourSteps[index];
         
-        // Update elements
         document.getElementById('tour-step-title').innerText = step.stepTitle;
         document.getElementById('tour-step-progress').innerText = `${index + 1} / ${tourSteps.length}`;
         document.getElementById('tour-title').innerText = step.title;
         document.getElementById('tour-description').innerText = step.description;
         
-        // Show/hide examples
         const examplesEl = document.getElementById('tour-examples');
         if (step.showExamples) {
             examplesEl.classList.remove('hidden');
@@ -771,7 +1295,6 @@
             examplesEl.classList.add('hidden');
         }
         
-        // Manage navigation buttons
         const prevBtn = document.getElementById('tour-btn-prev');
         const nextBtn = document.getElementById('tour-btn-next');
         
@@ -783,22 +1306,20 @@
         
         if (index === tourSteps.length - 1) {
             nextBtn.innerText = 'Got it';
-            nextBtn.classList.remove('bg-emerald-600', 'hover:bg-emerald-500');
+            nextBtn.classList.remove('bg-finAccent', 'hover:bg-finAccentHover');
             nextBtn.classList.add('bg-blue-600', 'hover:bg-blue-500');
         } else {
             nextBtn.innerText = 'Next';
-            nextBtn.classList.add('bg-emerald-600', 'hover:bg-emerald-500');
+            nextBtn.classList.add('bg-finAccent', 'hover:bg-finAccentHover');
             nextBtn.classList.remove('bg-blue-600', 'hover:bg-blue-500');
         }
         
-        // Handle programmatic tab switches
         if (step.target === 'tab-live' && currentTab !== 'live') {
             switchTab('live');
         } else if (step.target !== 'tab-live' && currentTab !== 'search' && step.target !== null && step.target !== 'pipeline-status') {
             switchTab('search');
         }
         
-        // Reposition card
         repositionTour();
     }
 
@@ -808,7 +1329,6 @@
         const arrow = document.getElementById('tour-arrow');
         
         if (!step.target) {
-            // Center modal
             card.style.top = '50%';
             card.style.left = '50%';
             card.style.transform = 'translate(-50%, -50%)';
@@ -822,22 +1342,18 @@
         arrow.classList.remove('hidden');
         const rect = target.getBoundingClientRect();
         
-        // Compute coordinates
         let top = rect.bottom + window.scrollY + 14;
         let left = rect.left + window.scrollX + (rect.width / 2) - (card.offsetWidth / 2);
         
-        // Keep inside screen viewport
         const padding = 16;
         if (left < padding) left = padding;
         if (left + card.offsetWidth > window.innerWidth - padding) {
             left = window.innerWidth - card.offsetWidth - padding;
         }
         
-        // Arrow placement matching card offset
         const targetCenterX = rect.left + window.scrollX + (rect.width / 2);
         let arrowOffset = targetCenterX - left;
         
-        // Bounds limit for arrow
         const arrowLimit = 16;
         if (arrowOffset < arrowLimit) arrowOffset = arrowLimit;
         if (arrowOffset > card.offsetWidth - arrowLimit) arrowOffset = card.offsetWidth - arrowLimit;
@@ -881,7 +1397,6 @@
         
         setTimeout(() => {
             container.classList.add('hidden');
-            // Restore back to search if we completed from live tab
             if (currentTab !== 'search') {
                 switchTab('search');
             }
@@ -891,14 +1406,11 @@
     }
 
     function useExampleQuery(query) {
-        // Switch back to search tab if they are elsewhere
         if (currentTab !== 'search') {
             switchTab('search');
         }
         document.getElementById('searchQuery').value = query;
         executeSearch();
-        
-        // Advance tour to next step after search execution
         nextTourStep();
     }
 
@@ -919,15 +1431,18 @@
     function togglePipelinePanel() {
         const content = document.getElementById('pipeline-content');
         const arrow = document.getElementById('pipeline-arrow');
+        const btn = document.querySelector('button[onclick="togglePipelinePanel()"]');
         isPipelineExpanded = !isPipelineExpanded;
         
         if (isPipelineExpanded) {
             content.classList.remove('hidden');
             arrow.classList.add('rotate-180');
+            btn.setAttribute('aria-expanded', 'true');
             loadPipelineStatus();
         } else {
             content.classList.add('hidden');
             arrow.classList.remove('rotate-180');
+            btn.setAttribute('aria-expanded', 'false');
         }
     }
 
@@ -946,15 +1461,12 @@
             const response = await fetch('/api/insights/pipeline/status');
             const data = await response.json();
 
-            // Cache data globally
             cachedPipelineData = data;
 
-            // Update summary and metrics
             document.getElementById('pipeline-status-summary').innerText = `Total insights: ${data.totalInsights}`;
-            document.getElementById('metric-global-run').innerText = formatDateTime(data.lastGlobalRun);
-            document.getElementById('metric-total-insights').innerText = data.totalInsights;
+            document.getElementById('metric-run-time').innerText = formatDateTime(data.lastGlobalRun);
+            document.getElementById('metric-total-records').innerText = data.totalInsights;
 
-            // Render individual ticker statuses
             renderPipelineTickers();
 
         } catch (e) {
@@ -976,25 +1488,25 @@
             const hasError = !!tickerRefreshErrors[t.symbol];
 
             return `
-                <div class="flex flex-col bg-slate-900 border border-slate-800/60 px-4 py-3 rounded-lg space-y-2">
+                <div class="flex flex-col bg-slate-50 border border-slate-200 px-4 py-3 rounded-lg space-y-2 text-left">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center space-x-3">
                             <span class="h-2.5 w-2.5 rounded-full ${dotColorClass}"></span>
                             <div class="space-y-0.5">
-                                <span class="text-sm font-bold text-white tracking-tight">${t.symbol}</span>
+                                <span class="text-sm font-bold text-finBlue tracking-tight">${t.symbol}</span>
                                 <span class="block text-[10px] text-slate-500 font-mono">Last Ingested: ${displayTime}</span>
                             </div>
                         </div>
-                        <button onclick="refreshTicker('${t.symbol}', this)" class="text-slate-500 hover:text-blue-400 transition-colors p-1.5 hover:bg-slate-950 rounded-md" title="Refresh Now">
+                        <button onclick="refreshTicker('${t.symbol}', this)" class="text-slate-400 hover:text-finAccent transition-colors p-1.5 hover:bg-slate-100 rounded-md" title="Refresh Now">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 16H21" /></svg>
                         </button>
                     </div>
                     ${hasError ? `
-                    <div class="text-[10px] font-mono text-amber-500 border border-amber-950/80 bg-amber-950/20 px-3 py-2 rounded flex justify-between items-center space-x-2">
+                    <div class="text-[10px] font-mono text-amber-600 border border-amber-200 bg-amber-50 px-3 py-2 rounded flex justify-between items-center space-x-2">
                         <span class="truncate">${tickerRefreshErrors[t.symbol]}</span>
                         <div class="flex space-x-2 flex-shrink-0">
-                            <button onclick="refreshTicker('${t.symbol}', null)" class="text-blue-400 hover:text-blue-300 font-semibold underline">Retry</button>
-                            <button onclick="dismissTickerError('${t.symbol}')" class="text-slate-400 hover:text-slate-350 font-semibold underline">Dismiss</button>
+                            <button onclick="refreshTicker('${t.symbol}', null)" class="text-blue-600 hover:text-blue-800 font-semibold underline focus:outline-none">Retry</button>
+                            <button onclick="dismissTickerError('${t.symbol}')" class="text-slate-500 hover:text-slate-700 font-semibold underline focus:outline-none">Dismiss</button>
                         </div>
                     </div>
                     ` : ''}
@@ -1012,7 +1524,7 @@
         if (btn) {
             originalHtml = btn.innerHTML;
             btn.disabled = true;
-            btn.classList.add('cursor-not-allowed', 'text-blue-500');
+            btn.classList.add('cursor-not-allowed', 'text-finAccent');
             btn.innerHTML = `
                 <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -1021,11 +1533,10 @@
             `;
         }
 
-        // Clear error on start
         dismissTickerError(symbol);
 
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
 
         try {
             const response = await fetch(`/api/insights/live/${symbol}`, { signal: controller.signal });
@@ -1042,13 +1553,11 @@
                 : 'Never';
 
             tickerRefreshErrors[symbol] = `❌ Failed to refresh data for ${symbol}. Last successful ingestion was ${displayTime}.`;
-            
-            // Log to localStorage diagnostics
             pushLocalError(e.message || 'IngestionError', `refreshTicker: ${symbol}`);
         } finally {
             if (btn) {
                 btn.disabled = false;
-                btn.classList.remove('cursor-not-allowed', 'text-blue-500');
+                btn.classList.remove('cursor-not-allowed', 'text-finAccent');
                 btn.innerHTML = originalHtml;
             }
             loadPipelineStatus();
