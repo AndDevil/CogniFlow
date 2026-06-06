@@ -26,9 +26,21 @@ public class EmbeddingService {
         
         // Defensive check: API Key existence
         if (apiKey == null || apiKey.isEmpty() || "YOUR_GEMINI_API_KEY".equals(apiKey)) {
-            log.error("PRODUCTION ERROR: Google AI API Key is missing. Search and embeddings will fail. " +
-                    "Ensure 'COGNIFLOW_GOOGLE_AI_API_KEY' is set in Cloud Run environment variables.");
-            throw new IllegalStateException("AI Embedding service failed: Missing API Key configuration.");
+            String weaviateHost = config.getWeaviate().getHost();
+            boolean isLocal = weaviateHost.contains("localhost") || weaviateHost.contains("127.0.0.1");
+            if (isLocal) {
+                log.warn("DEVELOPMENT WARNING: Google AI API Key is missing. Search and embeddings will use simulated vectors.");
+                float[] dummyVector = new float[768];
+                int hash = text.hashCode();
+                for (int i = 0; i < dummyVector.length; i++) {
+                    dummyVector[i] = (float) Math.sin(hash + i);
+                }
+                return dummyVector;
+            } else {
+                log.error("PRODUCTION ERROR: Google AI API Key is missing. Search and embeddings will fail. " +
+                        "Ensure 'COGNIFLOW_GOOGLE_AI_API_KEY' is set in Cloud Run environment variables.");
+                throw new IllegalStateException("AI Embedding service failed: Missing API Key configuration.");
+            }
         }
 
         // Diagnostic: Log masked key to verify source (Env vs Property)

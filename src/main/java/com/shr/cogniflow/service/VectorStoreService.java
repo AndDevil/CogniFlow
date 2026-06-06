@@ -57,7 +57,8 @@ public class VectorStoreService {
         Config weaviateConfig = new Config(scheme, hostPort);
 
         try {
-            if (wv.getApiKey() != null && !wv.getApiKey().isEmpty()) {
+            boolean isLocal = host.contains("localhost") || host.contains("127.0.0.1") || "http".equalsIgnoreCase(scheme);
+            if (wv.getApiKey() != null && !wv.getApiKey().isEmpty() && !"YOUR_WCS_API_KEY_HERE".equals(wv.getApiKey()) && !isLocal) {
                 log.info("Connecting to Weaviate with API Key Authentication (WCS mode).");
                 this.client = WeaviateAuthClient.apiKey(weaviateConfig, wv.getApiKey());
             } else {
