@@ -1,6 +1,7 @@
 package com.shr.cogniflow.controller;
 
 import com.shr.cogniflow.service.EmbeddingService;
+import com.shr.cogniflow.service.TickerService;
 import com.shr.cogniflow.service.VectorStoreService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +33,9 @@ class InsightControllerTest {
 
     @MockitoBean
     private com.shr.cogniflow.MarketDataService marketDataService;
+
+    @MockitoBean
+    private TickerService tickerService;
 
     @Test
     void testGetLiveInsight_Success() throws Exception {
@@ -102,5 +106,45 @@ class InsightControllerTest {
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.errorCode").value("GEMINI_API_ERROR"))
                 .andExpect(jsonPath("$.message").value("Failure connecting to generativelanguage.googleapis.com"));
+    }
+
+    @Test
+    void testGetPipelineStatus_Success() throws Exception {
+        when(tickerService.getTickers()).thenReturn(List.of("AAPL", "MSFT"));
+        
+        when(vectorStoreService.getLatestInsightBySymbol("AAPL")).thenReturn(List.of(
+            Map.of("symbol", "AAPL", "price", "150.0", "insight", "Good", "timestamp", System.currentTimeMillis() - 1000L)
+        ));
+        when(vectorStoreService.getLatestInsightBySymbol("MSFT")).thenReturn(List.of(
+            Map.of("symbol", "MSFT", "price", "250.0", "insight", "Old info", "timestamp", System.currentTimeMillis() - 8 * 60 * 60 * 1000L)
+        ));
+        
+        when(vectorStoreService.getTotalInsightsCount()).thenReturn(42);
+        when(vectorStoreService.getLastGlobalIngestionTime()).thenReturn(System.currentTimeMillis() - 1000L);
+
+        mockMvc.perform(get("/api/insights/pipeline/status"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalInsights").value(42))
+                .andExpect(jsonPath("$.lastGlobalRun").exists())
+                .andExpect(jsonPath("$.tickers[0].symbol").value("AAPL"))
+                .andExpect(jsonPath("$.tickers[0].status").value("healthy"))
+                .andExpect(jsonPath("$.tickers[1].symbol").value("MSFT"))
+                .andExpect(jsonPath("$.tickers[1].status").value("stale"));
+    }
+
+    @Test
+    void testGetPipelineStatus_NoData() throws Exception {
+        when(tickerService.getTickers()).thenReturn(List.of("GOOG"));
+        when(vectorStoreService.getLatestInsightBySymbol("GOOG")).thenReturn(List.of());
+        when(vectorStoreService.getTotalInsightsCount()).thenReturn(0);
+        when(vectorStoreService.getLastGlobalIngestionTime()).thenReturn(null);
+
+        mockMvc.perform(get("/api/insights/pipeline/status"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalInsights").value(0))
+                .andExpect(jsonPath("$.lastGlobalRun").value("Never"))
+                .andExpect(jsonPath("$.tickers[0].symbol").value("GOOG"))
+                .andExpect(jsonPath("$.tickers[0].status").value("failed"))
+                .andExpect(jsonPath("$.tickers[0].lastIngested").isEmpty());
     }
 }

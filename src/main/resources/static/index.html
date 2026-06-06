@@ -78,6 +78,36 @@
             </div>
         </div>
 
+        <!-- Collapsible Pipeline Status Panel -->
+        <div class="max-w-2xl mx-auto border border-slate-900 bg-slate-900/30 rounded-xl overflow-hidden transition-all duration-300">
+            <!-- Panel Header Toggle -->
+            <button onclick="togglePipelinePanel()" class="w-full flex justify-between items-center px-4 py-3 bg-slate-900/50 hover:bg-slate-900/80 transition-colors text-xs font-semibold tracking-wider text-slate-300 uppercase focus:outline-none focus:ring-0">
+                <div class="flex items-center space-x-2">
+                    <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                    <span>Data Pipeline Status</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <span id="pipeline-status-summary" class="text-[10px] text-slate-500 normal-case font-mono">Loading pipeline stats...</span>
+                    <svg id="pipeline-arrow" class="w-3 h-3 text-slate-500 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                </div>
+            </button>
+            
+            <!-- Panel Content -->
+            <div id="pipeline-content" class="hidden border-t border-slate-900 p-4 space-y-4 bg-slate-950/20">
+                <!-- Summary Metrics line -->
+                <div class="flex flex-col sm:flex-row justify-between text-[11px] font-mono text-slate-400 bg-slate-900/40 p-2.5 rounded-lg border border-slate-900 space-y-1 sm:space-y-0">
+                    <div>Last Global Run: <span id="metric-global-run" class="text-white font-bold">...</span></div>
+                    <div class="hidden sm:block text-slate-700">|</div>
+                    <div>Total Insights Ingested: <span id="metric-total-insights" class="text-emerald-400 font-bold">...</span></div>
+                </div>
+
+                <!-- Ticker status grid -->
+                <div id="pipeline-tickers" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <!-- Loaded dynamically -->
+                </div>
+            </div>
+        </div>
+
         <div class="max-w-2xl mx-auto flex flex-wrap gap-2 justify-center">
             <span class="text-xs text-slate-500 self-center mr-1">Concepts:</span>
             <button onclick="applyPill('positive market sentiment')" class="text-xs bg-slate-900 border border-slate-800 text-slate-300 px-3 py-1.5 rounded-full hover:border-emerald-500 transition-colors">👍 Positive Sentiment</button>
@@ -200,6 +230,7 @@
     window.onload = () => {
         loadTrackedTickers();
         initOnboarding();
+        initPipelineSummary();
     };
 
     function switchTab(tab) {
@@ -608,6 +639,111 @@
         } else {
             badge.classList.remove('opacity-100', 'scale-100');
             badge.classList.add('opacity-0', 'scale-95');
+        }
+    }
+
+    let isPipelineExpanded = false;
+
+    function togglePipelinePanel() {
+        const content = document.getElementById('pipeline-content');
+        const arrow = document.getElementById('pipeline-arrow');
+        isPipelineExpanded = !isPipelineExpanded;
+        
+        if (isPipelineExpanded) {
+            content.classList.remove('hidden');
+            arrow.classList.add('rotate-180');
+            loadPipelineStatus();
+        } else {
+            content.classList.add('hidden');
+            arrow.classList.remove('rotate-180');
+        }
+    }
+
+    async function initPipelineSummary() {
+        try {
+            const response = await fetch('/api/insights/pipeline/status');
+            const data = await response.json();
+            document.getElementById('pipeline-status-summary').innerText = `Total insights: ${data.totalInsights}`;
+        } catch (e) {
+            document.getElementById('pipeline-status-summary').innerText = `Offline`;
+        }
+    }
+
+    async function loadPipelineStatus() {
+        try {
+            const response = await fetch('/api/insights/pipeline/status');
+            const data = await response.json();
+
+            // Update summary and metrics
+            document.getElementById('pipeline-status-summary').innerText = `Total insights: ${data.totalInsights}`;
+            document.getElementById('metric-global-run').innerText = formatDateTime(data.lastGlobalRun);
+            document.getElementById('metric-total-insights').innerText = data.totalInsights;
+
+            // Render individual ticker statuses
+            const container = document.getElementById('pipeline-tickers');
+            container.innerHTML = data.tickers.map(t => {
+                let dotColorClass = 'bg-red-500 shadow-red-500/20';
+                if (t.status === 'healthy') dotColorClass = 'bg-emerald-500 shadow-emerald-500/20';
+                else if (t.status === 'stale') dotColorClass = 'bg-yellow-500 shadow-yellow-500/20';
+
+                const displayTime = t.lastIngested ? formatDateTime(t.lastIngested) : 'Never';
+
+                return `
+                    <div class="flex items-center justify-between bg-slate-900 border border-slate-800/60 px-4 py-3 rounded-lg">
+                        <div class="flex items-center space-x-3">
+                            <span class="h-2.5 w-2.5 rounded-full ${dotColorClass}"></span>
+                            <div class="space-y-0.5">
+                                <span class="text-sm font-bold text-white tracking-tight">${t.symbol}</span>
+                                <span class="block text-[10px] text-slate-500 font-mono">Last Ingested: ${displayTime}</span>
+                            </div>
+                        </div>
+                        <button onclick="refreshTicker('${t.symbol}', this)" class="text-slate-500 hover:text-blue-400 transition-colors p-1.5 hover:bg-slate-950 rounded-md" title="Refresh Now">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 16H21" /></svg>
+                        </button>
+                    </div>
+                `;
+            }).join('');
+
+        } catch (e) {
+            document.getElementById('pipeline-status-summary').innerText = `Failed to load status`;
+        }
+    }
+
+    async function refreshTicker(symbol, btnElement) {
+        const originalHtml = btnElement.innerHTML;
+        btnElement.disabled = true;
+        btnElement.classList.add('cursor-not-allowed', 'text-blue-500');
+        btnElement.innerHTML = `
+            <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+        `;
+
+        try {
+            const response = await fetch(`/api/insights/live/${symbol}`);
+            const data = await response.json();
+            
+            if (data.error) {
+                alert(`Refresh failed for ${symbol}: ${data.error}`);
+            }
+        } catch (e) {
+            alert(`Network error refreshing ${symbol}`);
+        } finally {
+            btnElement.disabled = false;
+            btnElement.classList.remove('cursor-not-allowed', 'text-blue-500');
+            btnElement.innerHTML = originalHtml;
+            loadPipelineStatus();
+        }
+    }
+
+    function formatDateTime(isoString) {
+        if (!isoString || isoString === 'Never') return 'Never';
+        try {
+            const date = new Date(isoString);
+            return date.toLocaleString();
+        } catch (e) {
+            return isoString;
         }
     }
 </script>

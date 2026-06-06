@@ -259,4 +259,58 @@ public class VectorStoreService {
         List<Map<String, Object>> insights = (List<Map<String, Object>>) get.get(CLASS_NAME);
         return insights != null ? insights : Collections.emptyList();
     }
+
+    @SuppressWarnings("unchecked")
+    public int getTotalInsightsCount() {
+        log.info("Querying total count of insights in Weaviate...");
+        String query = "{ Aggregate { MarketInsight { meta { count } } } }";
+        try {
+            Result<GraphQLResponse> result = client.graphQL().raw().withQuery(query).run();
+            if (result.hasErrors() || result.getResult() == null || result.getResult().getData() == null) {
+                log.warn("Failed to get total count from Weaviate aggregate query");
+                return 0;
+            }
+            Map<String, Object> data = (Map<String, Object>) result.getResult().getData();
+            Map<String, Object> aggregate = (Map<String, Object>) data.get("Aggregate");
+            if (aggregate != null) {
+                List<Map<String, Object>> marketInsights = (List<Map<String, Object>>) aggregate.get(CLASS_NAME);
+                if (marketInsights != null && !marketInsights.isEmpty()) {
+                    Map<String, Object> first = marketInsights.get(0);
+                    Map<String, Object> meta = (Map<String, Object>) first.get("meta");
+                    if (meta != null && meta.containsKey("count")) {
+                        return ((Number) meta.get("count")).intValue();
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error fetching total count from Weaviate", e);
+        }
+        return 0;
+    }
+
+    @SuppressWarnings("unchecked")
+    public Long getLastGlobalIngestionTime() {
+        log.info("Querying last global ingestion timestamp from Weaviate...");
+        String query = "{ Get { MarketInsight (limit: 1, sort: [{path: [\"timestamp\"], order: desc}]) { timestamp } } }";
+        try {
+            Result<GraphQLResponse> result = client.graphQL().raw().withQuery(query).run();
+            if (result.hasErrors() || result.getResult() == null || result.getResult().getData() == null) {
+                return null;
+            }
+            Map<String, Object> data = (Map<String, Object>) result.getResult().getData();
+            Map<String, Object> get = (Map<String, Object>) data.get("Get");
+            if (get != null) {
+                List<Map<String, Object>> marketInsights = (List<Map<String, Object>>) get.get(CLASS_NAME);
+                if (marketInsights != null && !marketInsights.isEmpty()) {
+                    Map<String, Object> first = marketInsights.get(0);
+                    if (first.containsKey("timestamp") && first.get("timestamp") instanceof Number) {
+                        return ((Number) first.get("timestamp")).longValue();
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error fetching last global ingestion time from Weaviate", e);
+        }
+        return null;
+    }
 }
