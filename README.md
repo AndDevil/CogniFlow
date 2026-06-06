@@ -1,152 +1,150 @@
-# 🚀 CogniFlow: Intelligent Market Search & AI Intelligence Dashboard
+# CogniFlow
 
-**CogniFlow** is an enterprise-grade financial intelligence engine that bridges real-time market data retrieval, generative AI sentiment engineering, and high-dimensional vector memory retrieval into a clean, modern single-page dashboard.
+[![Java Version](https://img.shields.io/badge/Java-17-blue)](https://adoptium.net/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5-brightgreen)](https://spring.io/)
+[![Weaviate](https://img.shields.io/badge/Weaviate-v1.25-important)](https://weaviate.io/)
+
+CogniFlow is a stock analysis dashboard. It pulls live market data, asks Google Gemini for a quick sentiment summary (a "vibe check"), and stores everything in a Weaviate vector database. Then you can search those insights using plain English.
+
+Live demo: [https://cogniflowservice-349799058791.europe-west1.run.app/](https://cogniflowservice-349799058791.europe-west1.run.app/)
 
 ---
 
-## 🗺️ Architectural Workflow
+## How it works
 
-CogniFlow utilizes a scheduled, decoupled data ingestion pipeline paired with a hybrid semantic search engine:
+1. **Ingest** – The app fetches stock quotes from Alpha Vantage.
+2. **AI vibe check** – The price and change go to Gemini 2.5 Flash, which returns a 2-sentence market sentiment summary.
+3. **Vector storage** – That summary gets turned into an embedding (via Gemini's embedding API) and saved in Weaviate.
+4. **Search UI** – You type a question into the dashboard, and it runs a hybrid search (keywords + vector similarity) over the stored insights.
 
 ```mermaid
 graph TD
-    A[Ticker Ingestion Pool] -->|Trigger Schedule / 3 hrs| B(Alpha Vantage API)
-    B -->|Fetch Global Quote| C{API Key Configured?}
-    C -->|Yes| D[Fetch Spot Price & Metrics]
-    C -->|No / Local fallback| E[Simulate Data Ingestion]
-    D --> F[Gemini 2.5 Flash API]
-    E --> F
-    F -->|Vibe Check Insight| G[Embedding Service]
-    G -->|768-Dim Vector Array| H[(Weaviate Vector DB)]
-    H -->|Query Matching| I[Web Dashboard]
-    I -->|Search / Live Check| J[REST Controller API]
-    J -->|Interrogate clusters| H
+    A[UI Search Input] --> B{Gemini API key configured?}
+    B -->|Yes| C[Call Gemini Embed API]
+    B -->|No| D[Generate Mock Hash Vector]
+    C --> E[Query Weaviate]
+    D --> E
+    E --> F[Render Cards on Dashboard]
 ```
 
 ---
 
-## ✨ Features
+## Tech stack
 
-### 1. 🔍 Hybrid Natural Language Search
-- **Dual Retrieval Mode**: Combines semantic vector distance calculations with classic BM25 keyword matching to surface accurate context matches.
-- **Symbol Filtering**: A dynamic drop-down selector lets analysts instantly isolate search results by specific stock ticker symbol.
-- **Query Caching**: Stores recent search keywords in local storage and serves them as clickable chips for fast re-execution.
-- **Debounced Inputs**: Triggers search-on-type with a 300ms debounce buffer to minimize redundant vector calculations.
-
-### 2. 📊 Master-Detail AI Analysis Interface
-- **Resizable Layout**: A responsive, two-column layout on desktop featuring a custom JavaScript-based draggable panel splitter to scale details.
-- **Relevance Indicators**: Displays exact matching percentages and deterministic 5-star ratings for each search result card.
-- **Detail Metrics**: Selecting any result card loads full text, spot prices, and formatted dates, with options to **Copy Output** or **Export as .txt**.
-- **Usage & Cost Projection**: Displays estimated LLM token usage (calculated on text length) and free price markers.
-
-### 3. 🚦 Keyless Local Mock Fallback
-- **Anonymous Weaviate Access**: Automatically skips cloud API authentication when connection URLs resolve to `localhost` or `127.0.0.1`.
-- **Text-Hash Embedding Simulator**: Falls back to generating deterministic vector embeddings based on text hashes if Gemini API keys are omitted in development, allowing developers to run full searches locally without crashes or credentials.
-
-### 4. ⚙️ Operational Diagnostics & Onboarding
-- **Diagnostics Console**: An slide-up troubleshooting drawer that collects and visualizes local storage logs of system errors.
-- **Diagnostics Clipboard Dump**: "Report Issue" gathers system properties, logs, caching states, and browser metadata into a JSON block ready for clipboard pasting.
-- **Onboarding Tour**: An interactive guided tour wizard that walks first-time users through memory searching, live runs, and metrics panel features.
+- **Backend**: Java 17 + Spring Boot 3.5
+- **Vector DB**: Weaviate v1.25 (running in Docker, accessed via Java Client v4)
+- **AI & embeddings**: Google Gemini 2.5 Flash & Gemini Embedding (`gemini-embedding-001`)
+- **Market data**: Alpha Vantage API
+- **Frontend**: plain HTML/JS + Tailwind CSS
 
 ---
 
-## 🛠️ Technology Stack
+## Features
 
-- **Backend Framework**: Java 17+ with Spring Boot 3.5.x
-- **Vector Database**: Weaviate v4 (running locally via Docker or in Weaviate Cloud)
-- **Generative AI**: Google Gemini API (Gemini 2.5 Flash model)
-- **Market Data Provider**: Alpha Vantage API
-- **Frontend Engine**: Vanilla HTML5, JavaScript (ES6+), and CSS3 with Tailwind CDN
-- **Resiliency & Circuit Breakers**: Resilience4j (annotated client guardrails)
-- **OpenAPI Tooling**: Springdoc OpenAPI (Swagger UI)
+- Natural language search over stock insights using hybrid (BM25 + vector) search
+- AI-generated "vibe check" summaries for any stock ticker
+- Dashboard UI with resizable panels, relevance indicators, and export options
+- Local mock fallback – search works without API keys (deterministic mock vectors)
+- REST API to manage tracked tickers (add/remove symbols from the ingestion pool)
 
 ---
 
-## 🚀 Getting Started
+## Prerequisites
 
-### Prerequisites
-- **Java JDK**: 17 or higher
-- **Docker & Docker Desktop**: Installed and running
-- **Maven**: (Wrapper script `./mvnw` is included in the project root)
+- Docker & Docker Compose
+- Java 17+
+- Python 3 (only needed for running the mock database seeder script)
+- *(Optional)* Alpha Vantage & Google Gemini API keys – required for live data fetching
 
-### 1. Environment Configurations
-Configure parameters inside `src/main/resources/application.properties` or set matching OS environment variables:
+---
 
-```properties
-# API Key Credentials
-cogniflow.alphavantage-api-key=YOUR_ALPHA_VANTAGE_KEY
-cogniflow.google-ai-api-key=YOUR_GEMINI_API_KEY
-cogniflow.job-secret=YOUR_CRON_SCHEDULER_SECRET_TOKEN
+## Local development (read this first)
 
-# Weaviate Cluster Configuration (Defaults for local docker-compose)
-cogniflow.weaviate.host=localhost
-cogniflow.weaviate.port=8081
-cogniflow.weaviate.scheme=http
-# cogniflow.weaviate.api-key=YOUR_WEAVIATE_CLOUD_API_KEY (Optional for remote instances)
-```
+To make local development easier without needing API keys for everything:
 
-### 2. Run Local Infrastructure
-Spin up the local Weaviate vector database:
+- **Mock embeddings**: If `cogniflow.google-ai-api-key` is missing or left as a placeholder, search still works. The app generates deterministic mock vectors from string hashes.
+- **Ingestion fails without keys**: Running a live ticker fetch on the dashboard (`/api/insights/live/{symbol}`) will fail with a 503 if you don't have valid Alpha Vantage or Gemini keys. The app does not simulate live fetches.
+- **Job Secret**: Ensure `cogniflow.job-secret` in your local `application.properties` has a placeholder value set, otherwise context startup validation will fail.
+- **Database seeding**: To test the UI locally without credentials, run the included Python script to inject pre-made vector data into Weaviate.
+
+---
+
+## Setup and running
+
+### 1. Start Weaviate
+Weaviate runs in a Docker container:
 ```bash
 docker-compose up -d
 ```
-This initializes a persistent Weaviate datastore exposed on port `8081` (anonymous access).
+This binds Weaviate to port `8081` on your local machine.
 
-### 3. Start Spring Boot App
-Compile and boot up the server:
+### 2. Configure credentials
+Edit `src/main/resources/application.properties`:
+```properties
+cogniflow.alphavantage-api-key=YOUR_ALPHA_VANTAGE_KEY
+cogniflow.google-ai-api-key=YOUR_GEMINI_API_KEY
+cogniflow.job-secret=YOUR_SCHEDULER_SECRET
+
+cogniflow.weaviate.host=localhost
+cogniflow.weaviate.port=8081
+cogniflow.weaviate.scheme=http
+```
+
+### 3. Load mock data
+Run the helper script to populate Weaviate with mock insights for AAPL, MSFT, and IBM:
+```bash
+python scripts/populate_mock_weaviate.py
+```
+
+### 4. Run the app
 ```bash
 ./mvnw spring-boot:run
 ```
-Once booted, the application runs on [http://localhost:8080](http://localhost:8080).
-
-### 4. Populate Local Database with Mock Data
-To populate the empty vector database with mock stock sentiment insights for AAPL, MSFT, and IBM:
-```bash
-python "C:\Users\Shrish\.gemini\antigravity-ide\scratch\populate_mock_weaviate.py"
-```
+Open [http://localhost:8080/](http://localhost:8080/) in your browser.
 
 ---
 
-## 🧪 Testing
+## Running tests
 
-The codebase includes integration tests that leverage Testcontainers to spin up temporary Weaviate environments.
-Run the complete testing suite using:
+Integration tests spin up a temporary Weaviate container using Testcontainers. Make sure Docker is running, then:
 ```bash
 ./mvnw test
 ```
 
 ---
 
-## 🔍 API Endpoints
+## API endpoints
 
-CogniFlow registers interactive swagger documentation available locally at:
-👉 **[http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)**
+Swagger docs are available at [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html).
 
-### Public REST Interface
-
-| HTTP Method | Endpoint | Query Parameters | Description |
-| :--- | :--- | :--- | :--- |
-| **GET** | `/api/insights/search` | `query` (str), `limit` (int), `hybrid` (bool) | Query stored database insights using hybrid semantic search. |
-| **GET** | `/api/insights/live/{symbol}`| None | Run a live check: fetch spot price from Alpha Vantage, pass to Gemini, and save vector. |
-| **GET** | `/api/insights/pipeline/status`| None | Retrieve global runtimes, total records count, and individual ticker freshness metrics. |
-| **GET** | `/api/tickers` | None | Get list of currently tracked stock tickers. |
-| **POST** | `/api/tickers/{symbol}` | None | Add a symbol to the scheduled tracking pool. |
-| **DELETE**| `/api/tickers/{symbol}` | None | Remove a symbol from the scheduled tracking pool. |
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| **GET** | `/api/insights/search?query={q}&limit={n}&hybrid={true/false}` | Searches stored insights using hybrid (BM25 + vector) query modes. |
+| **GET** | `/api/insights/live/{symbol}` | Fetches a live quote, generates a Gemini summary, and saves to Weaviate. (Requires API keys.) |
+| **GET** | `/api/insights/pipeline/status` | Returns total record count and ingestion health for tracked tickers. |
+| **POST** | `/api/internal/run-scan` | Manually triggers a batch scan of the ingestion pool. Requires header `X-CloudScheduler-JobSecret`. |
+| **GET** | `/api/tickers` | Lists all tracked tickers. |
+| **POST** | `/api/tickers/{ticker}` | Adds a ticker to the ingestion pool. |
+| **DELETE** | `/api/tickers/{ticker}` | Removes a ticker from the ingestion pool. |
 
 ---
 
-## ☁️ Serverless Deployment (Google Cloud Run)
+## Cloud deployment
 
-This project contains deployment scripts and configurations tailored for **Google Cloud Build** and **Google Cloud Run**:
+*Note: This section is for production deployment. Skip it for local development.*
 
-1. **Decoupled Job Execution**:
-   Scheduled cron runs are triggered externally via Google Cloud Scheduler sending authenticated requests to `/api/internal/run-scan` containing the `X-CloudScheduler-JobSecret` header. This allows the Cloud Run container instance to safely scale down to **0 instances** when idle, incurring zero idle-billing costs.
+The app is set up to deploy to Google Cloud Run via Google Cloud Build.
+Pushing to the `deployGC` branch triggers the build automatically:
+```bash
+git add .
+git commit -m "Update application configs"
+git push origin deployGC
+```
 
-2. **Triggering Deployment**:
-   Pushing changes to the repository's `deployGC` branch initiates Google Cloud Build via `cloudbuild.yaml`:
-   ```bash
-   git add .
-   git commit -m "Commit message"
-   git push origin deployGC
-   ```
-   Google Cloud Build automatically compiles the jar, containers it using the `Dockerfile`, registers it with Google Artifact Registry, and deploys the revision to Cloud Run.
+The scheduled scans run serverless: a Cloud Scheduler job periodically hits `/api/internal/run-scan` with the required authorization header. That way the Cloud Run container can scale to zero when idle. For detailed instructions on provisioning the OIDC service account and creating the Cloud Scheduler job, see the [GCP Deployment Guide](docs/gcp_deployment_guide.md).
+
+---
+
+## License
+
+This project is for internal and educational use.
