@@ -21,7 +21,7 @@
     </div>
     <div class="flex space-x-4">
         <a href="/swagger-ui.html" target="_blank" class="text-xs font-mono text-slate-400 hover:text-emerald-400 transition-colors">API Docs</a>
-        <div class="text-xs font-mono text-slate-400 bg-slate-900 px-3 py-1.5 rounded border border-slate-800">
+        <div id="pipeline-status" class="text-xs font-mono text-slate-400 bg-slate-900 px-3 py-1.5 rounded border border-slate-800">
             Pipeline: Active
         </div>
     </div>
@@ -129,6 +129,49 @@
 
 </main>
 
+<!-- Onboarding Tour Container -->
+<div id="onboarding-tour" class="fixed inset-0 z-[100] hidden transition-all duration-300">
+    <!-- Backdrop overlay -->
+    <div id="tour-overlay" onclick="skipTour()" class="absolute inset-0 bg-slate-950/60 backdrop-blur-[2px] transition-opacity duration-300 opacity-0 cursor-pointer"></div>
+    
+    <!-- Tooltip Card -->
+    <div id="tour-card" class="absolute bg-slate-900/95 backdrop-blur-md border border-slate-800/80 rounded-xl p-5 shadow-2xl shadow-emerald-950/20 max-w-sm w-[90vw] md:w-96 transition-all duration-300 ease-out opacity-0 translate-y-2 flex flex-col space-y-4">
+        <!-- Arrow -->
+        <div id="tour-arrow" class="absolute w-3 h-3 bg-slate-900 border-t border-l border-slate-800/80 rotate-45 -top-1.5 left-1/2 -translate-x-1/2"></div>
+        
+        <!-- Header / Step Indicator -->
+        <div class="flex justify-between items-center">
+            <span id="tour-step-title" class="text-xs font-semibold uppercase tracking-wider text-emerald-400">Welcome to CogniFlow</span>
+            <span id="tour-step-progress" class="text-[10px] font-mono text-slate-500">1 / 4</span>
+        </div>
+        
+        <!-- Content -->
+        <div class="space-y-2">
+            <h3 id="tour-title" class="text-base font-bold text-white leading-snug">Let's get you onboarded!</h3>
+            <p id="tour-description" class="text-xs text-slate-400 leading-relaxed"></p>
+        </div>
+        
+        <!-- Interactive Example Queries (Finance Focus) -->
+        <div id="tour-examples" class="hidden space-y-2 bg-slate-950/50 p-3 rounded-lg border border-slate-850">
+            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Click an example to run:</p>
+            <div class="flex flex-col space-y-1.5">
+                <button onclick="useExampleQuery('MSFT revenue trend')" class="text-left text-xs bg-slate-900 border border-slate-800/60 hover:border-emerald-500/50 hover:text-emerald-400 p-2 rounded transition-colors truncate">🔍 "MSFT revenue trend"</button>
+                <button onclick="useExampleQuery('AAPL news last week')" class="text-left text-xs bg-slate-900 border border-slate-800/60 hover:border-emerald-500/50 hover:text-emerald-400 p-2 rounded transition-colors truncate">🔍 "AAPL news last week"</button>
+                <button onclick="useExampleQuery('mild buying interest')" class="text-left text-xs bg-slate-900 border border-slate-800/60 hover:border-emerald-500/50 hover:text-emerald-400 p-2 rounded transition-colors truncate">🔍 "mild buying interest"</button>
+            </div>
+        </div>
+        
+        <!-- Footer Actions -->
+        <div class="flex justify-between items-center pt-2 border-t border-slate-800/40">
+            <button onclick="skipTour()" class="text-xs text-slate-500 hover:text-slate-300 transition-colors">Skip Tour</button>
+            <div class="flex space-x-2">
+                <button id="tour-btn-prev" onclick="prevTourStep()" class="text-xs border border-slate-800 bg-slate-950 hover:bg-slate-900 text-slate-300 px-3 py-1.5 rounded-lg transition-colors hidden">Back</button>
+                <button id="tour-btn-next" onclick="nextTourStep()" class="text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-4 py-1.5 rounded-lg transition-colors shadow-lg shadow-emerald-950/30">Next</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     // --- STATE MANAGEMENT ---
     let currentTab = 'search';
@@ -136,6 +179,7 @@
     // --- INITIALIZATION ---
     window.onload = () => {
         loadTrackedTickers();
+        initOnboarding();
     };
 
     function switchTab(tab) {
@@ -322,6 +366,216 @@
         } catch (error) {
             resultsGrid.innerHTML = `<div class="col-span-full p-6 text-center text-red-500 text-sm">Search layer unavailable.</div>`;
         }
+    }
+
+    // --- ONBOARDING TOUR LOGIC ---
+    let tourStep = 0;
+    const tourSteps = [
+        {
+            title: "Welcome to CogniFlow 🚀",
+            stepTitle: "Welcome",
+            description: "CogniFlow is an AI-powered Market Intelligence engine. It fetches financial data, embeds insights into a vector database, and lets you query market vibes using natural language. Let's take a quick 1-minute tour!",
+            target: null,
+            placement: 'center'
+        },
+        {
+            title: "Interrogate Vector Memory",
+            stepTitle: "Step 1 of 3",
+            description: "Type natural language queries here to search analyzed stock vibe checks in Weaviate. We've prepared some sample queries below for you to try!",
+            target: "searchQuery",
+            placement: 'bottom',
+            showExamples: true
+        },
+        {
+            title: "On-Demand AI Analysis",
+            stepTitle: "Step 2 of 3",
+            description: "Switch to this tab to trigger live AI market scans for any global ticker on the fly, and manage your scheduled ingestion pool.",
+            target: "tab-live",
+            placement: 'bottom'
+        },
+        {
+            title: "Live Ingestion Status",
+            stepTitle: "Step 3 of 3",
+            description: "This status indicator displays whether the background scheduled ingestion pipelines are active.",
+            target: "pipeline-status",
+            placement: 'bottom'
+        }
+    ];
+
+    function initOnboarding() {
+        const tourDone = localStorage.getItem('cogniflow-onboarding-done');
+        if (!tourDone) {
+            setTimeout(startTour, 600); // Small delay for visual entry
+        }
+    }
+
+    function startTour() {
+        tourStep = 0;
+        const container = document.getElementById('onboarding-tour');
+        const overlay = document.getElementById('tour-overlay');
+        const card = document.getElementById('tour-card');
+        
+        container.classList.remove('hidden');
+        
+        // Trigger reflow for transition
+        void container.offsetWidth;
+        
+        overlay.classList.remove('opacity-0');
+        overlay.classList.add('opacity-100');
+        card.classList.remove('opacity-0', 'translate-y-2');
+        card.classList.add('opacity-100', 'translate-y-0');
+        
+        showTourStep(0);
+        window.addEventListener('resize', repositionTour);
+    }
+
+    function showTourStep(index) {
+        tourStep = index;
+        const step = tourSteps[index];
+        
+        // Update elements
+        document.getElementById('tour-step-title').innerText = step.stepTitle;
+        document.getElementById('tour-step-progress').innerText = `${index + 1} / ${tourSteps.length}`;
+        document.getElementById('tour-title').innerText = step.title;
+        document.getElementById('tour-description').innerText = step.description;
+        
+        // Show/hide examples
+        const examplesEl = document.getElementById('tour-examples');
+        if (step.showExamples) {
+            examplesEl.classList.remove('hidden');
+        } else {
+            examplesEl.classList.add('hidden');
+        }
+        
+        // Manage navigation buttons
+        const prevBtn = document.getElementById('tour-btn-prev');
+        const nextBtn = document.getElementById('tour-btn-next');
+        
+        if (index === 0) {
+            prevBtn.classList.add('hidden');
+        } else {
+            prevBtn.classList.remove('hidden');
+        }
+        
+        if (index === tourSteps.length - 1) {
+            nextBtn.innerText = 'Got it';
+            nextBtn.classList.remove('bg-emerald-600', 'hover:bg-emerald-500');
+            nextBtn.classList.add('bg-blue-600', 'hover:bg-blue-500');
+        } else {
+            nextBtn.innerText = 'Next';
+            nextBtn.classList.add('bg-emerald-600', 'hover:bg-emerald-500');
+            nextBtn.classList.remove('bg-blue-600', 'hover:bg-blue-500');
+        }
+        
+        // Handle programmatic tab switches
+        if (step.target === 'tab-live' && currentTab !== 'live') {
+            switchTab('live');
+        } else if (step.target !== 'tab-live' && currentTab !== 'search' && step.target !== null && step.target !== 'pipeline-status') {
+            switchTab('search');
+        }
+        
+        // Reposition card
+        repositionTour();
+    }
+
+    function repositionTour() {
+        const step = tourSteps[tourStep];
+        const card = document.getElementById('tour-card');
+        const arrow = document.getElementById('tour-arrow');
+        
+        if (!step.target) {
+            // Center modal
+            card.style.top = '50%';
+            card.style.left = '50%';
+            card.style.transform = 'translate(-50%, -50%)';
+            arrow.classList.add('hidden');
+            return;
+        }
+        
+        const target = document.getElementById(step.target);
+        if (!target) return;
+        
+        arrow.classList.remove('hidden');
+        const rect = target.getBoundingClientRect();
+        
+        // Compute coordinates
+        let top = rect.bottom + window.scrollY + 14;
+        let left = rect.left + window.scrollX + (rect.width / 2) - (card.offsetWidth / 2);
+        
+        // Keep inside screen viewport
+        const padding = 16;
+        if (left < padding) left = padding;
+        if (left + card.offsetWidth > window.innerWidth - padding) {
+            left = window.innerWidth - card.offsetWidth - padding;
+        }
+        
+        // Arrow placement matching card offset
+        const targetCenterX = rect.left + window.scrollX + (rect.width / 2);
+        let arrowOffset = targetCenterX - left;
+        
+        // Bounds limit for arrow
+        const arrowLimit = 16;
+        if (arrowOffset < arrowLimit) arrowOffset = arrowLimit;
+        if (arrowOffset > card.offsetWidth - arrowLimit) arrowOffset = card.offsetWidth - arrowLimit;
+        
+        card.style.top = `${top}px`;
+        card.style.left = `${left}px`;
+        card.style.transform = 'none';
+        
+        arrow.style.left = `${arrowOffset}px`;
+    }
+
+    function nextTourStep() {
+        if (tourStep < tourSteps.length - 1) {
+            showTourStep(tourStep + 1);
+        } else {
+            completeTour();
+        }
+    }
+
+    function prevTourStep() {
+        if (tourStep > 0) {
+            showTourStep(tourStep - 1);
+        }
+    }
+
+    function skipTour() {
+        completeTour();
+    }
+
+    function completeTour() {
+        localStorage.setItem('cogniflow-onboarding-done', 'true');
+        
+        const container = document.getElementById('onboarding-tour');
+        const overlay = document.getElementById('tour-overlay');
+        const card = document.getElementById('tour-card');
+        
+        overlay.classList.remove('opacity-100');
+        overlay.classList.add('opacity-0');
+        card.classList.remove('opacity-100', 'translate-y-0');
+        card.classList.add('opacity-0', 'translate-y-2');
+        
+        setTimeout(() => {
+            container.classList.add('hidden');
+            // Restore back to search if we completed from live tab
+            if (currentTab !== 'search') {
+                switchTab('search');
+            }
+        }, 300);
+        
+        window.removeEventListener('resize', repositionTour);
+    }
+
+    function useExampleQuery(query) {
+        // Switch back to search tab if they are elsewhere
+        if (currentTab !== 'search') {
+            switchTab('search');
+        }
+        document.getElementById('searchQuery').value = query;
+        executeSearch();
+        
+        // Advance tour to next step after search execution
+        nextTourStep();
     }
 </script>
 </body>
