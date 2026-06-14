@@ -216,7 +216,7 @@
             <div class="w-full lg:w-[380px] min-w-[280px] max-w-[700px] flex flex-col shrink-0 bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden" id="analysis-panel">
                 <div class="bg-slate-50 border-b border-slate-200 px-5 py-4 flex justify-between items-center">
                     <h3 class="text-sm font-bold uppercase tracking-wider text-finBlue">AI Analysis Detail</h3>
-                    <span class="text-[10px] font-mono bg-slate-200 px-2 py-0.5 rounded text-slate-600">Gemini Ingest</span>
+                    <span class="text-[10px] font-mono bg-slate-200 px-2 py-0.5 rounded text-slate-600">Groq Ingest</span>
                 </div>
                 
                 <div class="p-6 flex-1 flex flex-col justify-between space-y-6 overflow-y-auto custom-scrollbar" id="analysis-panel-body">
@@ -300,7 +300,7 @@
             <ul class="list-disc pl-5 space-y-1.5">
                 <li><strong>Ingestion Pool:</strong> The system automatically tracks a list of stock symbols (configured in the Live Ingestion Pool).</li>
                 <li><strong>Alpha Vantage Integration:</strong> The background processor retrieves the latest stock quotes and price snapshot metrics.</li>
-                <li><strong>Gemini 2.5 Flash:</strong> A generative AI process summarizes the trends into concise, qualitative vibes.</li>
+                <li><strong>Groq (Llama 3):</strong> A generative AI process summarizes the trends into concise, qualitative vibes.</li>
                 <li><strong>Weaviate Vector DB:</strong> Insights are converted into mathematical vector representations (embeddings) and persisted.</li>
                 <li><strong>Hybrid Semantic Search:</strong> When you search, CogniFlow combines semantic vector matching and BM25 keywords to surface highly relevant matches instantly.</li>
             </ul>
@@ -324,7 +324,7 @@
         </button>
     </div>
     
-    <p class="select-none font-medium text-[10px] uppercase tracking-widest text-slate-400">© 2026 CogniFlow. Powered by Gemini & Weaviate Cloud.</p>
+    <p class="select-none font-medium text-[10px] uppercase tracking-widest text-slate-400">© 2026 CogniFlow. Powered by Groq & Weaviate Cloud.</p>
 </footer>
 
 <!-- Diagnostics Drawer -->
@@ -756,7 +756,7 @@ Spot Price:    $${price}
 AI Market Pulse Insight:
 ${insight}
 ====================================
-Generated via CogniFlow Service (Gemini & Weaviate Vector DB)
+Generated via CogniFlow Service (Groq & Weaviate Vector DB)
 `;
         const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
         const link = document.createElement('a');
@@ -1064,7 +1064,7 @@ Generated via CogniFlow Service (Gemini & Weaviate Vector DB)
                     <div class="bg-slate-50 p-6 rounded-xl border border-slate-200">
                         <div class="flex items-center space-x-2 mb-3 select-none">
                              <div class="h-1.5 w-1.5 rounded-full bg-finAccent"></div>
-                             <span class="text-[10px] font-mono text-finSubtext uppercase tracking-widest">AI Market Pulse (Gemini)</span>
+                             <span class="text-[10px] font-mono text-finSubtext uppercase tracking-widest">AI Market Pulse (Groq)</span>
                         </div>
                         <p class="text-slate-700 leading-relaxed font-normal leading-6">${data.insight}</p>
                     </div>

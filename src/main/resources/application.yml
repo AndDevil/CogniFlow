@@ -15,5 +15,7 @@ resilience4j:
     instances:
       geminiAi:
         baseConfig: default
+      groqAi:
+        baseConfig: default
       alphaVantage:
         baseConfig: default

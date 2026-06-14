@@ -19,19 +19,20 @@ public class AiAnalysisService {
     private final CogniflowConfig config;
 
     public AiAnalysisService(RestClient.Builder builder, CogniflowConfig config) {
-        this.restClient = builder.baseUrl("https://generativelanguage.googleapis.com").build();
+        this.restClient = builder.baseUrl("https://api.groq.com/openai/v1").build();
         this.config = config;
     }
 
-    @CircuitBreaker(name = "geminiAi", fallbackMethod = "analyzeMarketTrendFallback")
+    @CircuitBreaker(name = "groqAi", fallbackMethod = "analyzeMarketTrendFallback")
     public String analyzeMarketTrend(GlobalQuote quote) {
         log.info("Asking AI for a vibe check on {}...", quote.getSymbol());
 
-        String apiKey = config.getGoogleAiApiKey();
-        if (apiKey == null || apiKey.isEmpty() || "YOUR_GEMINI_API_KEY".equals(apiKey)) {
-            log.error("PRODUCTION ERROR: Google AI API Key is missing for analysis. Circuit breaker will trip.");
-            throw new IllegalStateException("AI Analysis failed: Missing API Key.");
+        String apiKey = config.getGroqApiKey();
+        if (apiKey == null || apiKey.isEmpty() || "YOUR_GROQ_API_KEY".equals(apiKey)) {
+            log.error("PRODUCTION ERROR: Groq API Key is missing for analysis. Circuit breaker will trip.");
+            throw new IllegalStateException("AI Analysis failed: Missing Groq API Key.");
         }
+        apiKey = apiKey.trim();
 
         String prompt = String.format(
                 "Analyze this asset: %s. Price: %s. Change: %s. Give a 2 sentence summary.",
@@ -39,12 +40,18 @@ public class AiAnalysisService {
         );
 
         var requestBody = Map.of(
-                "contents", List.of(Map.of("parts", List.of(Map.of("text", prompt))))
+                "model", "llama-3.1-8b-instant",
+                "messages", List.of(Map.of(
+                        "role", "user",
+                        "content", prompt
+                )),
+                "temperature", 0.2
         );
 
         try {
             Map response = restClient.post()
-                    .uri("/v1/models/gemini-2.5-flash:generateContent?key=" + apiKey)
+                    .uri("/chat/completions")
+                    .header("Authorization", "Bearer " + apiKey)
                     .body(requestBody)
                     .retrieve()
                     .body(Map.class);
@@ -52,7 +59,7 @@ public class AiAnalysisService {
             return extractTextFromResponse(response);
 
         } catch (HttpStatusCodeException e) {
-            log.warn("Gemini API call failed with status: {}. Re-throwing for circuit breaker.", e.getStatusCode());
+            log.warn("Groq API call failed with status: {}. Re-throwing for circuit breaker.", e.getStatusCode());
             throw e;
         } catch (Exception e) {
             log.error("Critical failure during AI text generation. Re-throwing for circuit breaker.", e);
@@ -61,23 +68,24 @@ public class AiAnalysisService {
     }
 
     /**
-     * Fallback method for analyzeMarketTrend when Gemini API fails or the circuit is open.
+     * Fallback method for analyzeMarketTrend when Groq API fails or the circuit is open.
      */
     public String analyzeMarketTrendFallback(GlobalQuote quote, Throwable t) {
-        log.warn("Circuit Breaker [geminiAi] activated for {}. Reason: {}", quote.getSymbol(), t.getMessage());
+        log.warn("Circuit Breaker [groqAi] activated for {}. Reason: {}", quote.getSymbol(), t.getMessage());
         return String.format("Fallback Insight: The asset %s is currently trading at $%s. Advanced AI analysis is temporarily unavailable (Circuit Breaker active).",
                 quote.getSymbol(), quote.getPrice());
     }
 
-    @CircuitBreaker(name = "geminiAi", fallbackMethod = "resolveCompanyToTickerFallback")
+    @CircuitBreaker(name = "groqAi", fallbackMethod = "resolveCompanyToTickerFallback")
     public String resolveCompanyToTicker(String query) {
         log.info("Asking AI to resolve query '{}' to a stock ticker...", query);
 
-        String apiKey = config.getGoogleAiApiKey();
-        if (apiKey == null || apiKey.isEmpty() || "YOUR_GEMINI_API_KEY".equals(apiKey)) {
-            log.error("PRODUCTION ERROR: Google AI API Key is missing for ticker resolution.");
-            throw new IllegalStateException("Ticker resolution failed: Missing API Key.");
+        String apiKey = config.getGroqApiKey();
+        if (apiKey == null || apiKey.isEmpty() || "YOUR_GROQ_API_KEY".equals(apiKey)) {
+            log.error("PRODUCTION ERROR: Groq API Key is missing for ticker resolution.");
+            throw new IllegalStateException("Ticker resolution failed: Missing Groq API Key.");
         }
+        apiKey = apiKey.trim();
 
         String prompt = String.format(
                 "Identify the primary stock ticker symbol for: '%s'. Respond with EXACTLY and ONLY the uppercase ticker symbol (e.g., AAPL, V, MSFT). If it is already a ticker, return it uppercase. If it's not a publicly traded company, return UNKNOWN.",
@@ -85,12 +93,18 @@ public class AiAnalysisService {
         );
 
         var requestBody = Map.of(
-                "contents", List.of(Map.of("parts", List.of(Map.of("text", prompt))))
+                "model", "llama-3.1-8b-instant",
+                "messages", List.of(Map.of(
+                        "role", "user",
+                        "content", prompt
+                )),
+                "temperature", 0.1
         );
 
         try {
             Map response = restClient.post()
-                    .uri("/v1/models/gemini-2.5-flash:generateContent?key=" + apiKey)
+                    .uri("/chat/completions")
+                    .header("Authorization", "Bearer " + apiKey)
                     .body(requestBody)
                     .retrieve()
                     .body(Map.class);
@@ -103,7 +117,7 @@ public class AiAnalysisService {
             return resolved;
 
         } catch (HttpStatusCodeException e) {
-            log.warn("Gemini API call failed during ticker resolution: {}. Re-throwing.", e.getStatusCode());
+            log.warn("Groq API call failed during ticker resolution: {}. Re-throwing.", e.getStatusCode());
             throw e;
         } catch (Exception e) {
             log.error("Critical failure during ticker resolution.", e);
@@ -112,7 +126,7 @@ public class AiAnalysisService {
     }
 
     public String resolveCompanyToTickerFallback(String query, Throwable t) {
-        log.warn("Circuit Breaker [geminiAi] active during resolution for '{}'. Defaulting to raw input.", query);
+        log.warn("Circuit Breaker [groqAi] active during resolution for '{}'. Defaulting to raw input.", query);
         String fallback = query.toUpperCase().trim().replaceAll("[^A-Z]", "");
         return fallback.isEmpty() ? "UNKNOWN" : fallback;
     }
@@ -120,19 +134,18 @@ public class AiAnalysisService {
     @SuppressWarnings("unchecked")
     private String extractTextFromResponse(Map response) {
         try {
-            if (response != null && response.containsKey("candidates")) {
-                List<Map<String, Object>> candidates = (List<Map<String, Object>>) response.get("candidates");
-                if (!candidates.isEmpty()) {
-                    Map<String, Object> firstCandidate = candidates.get(0);
-                    Map<String, Object> content = (Map<String, Object>) firstCandidate.get("content");
-                    List<Map<String, Object>> parts = (List<Map<String, Object>>) content.get("parts");
-                    if (!parts.isEmpty()) {
-                        return (String) parts.get(0).get("text");
+            if (response != null && response.containsKey("choices")) {
+                List<Map<String, Object>> choices = (List<Map<String, Object>>) response.get("choices");
+                if (!choices.isEmpty()) {
+                    Map<String, Object> firstChoice = choices.get(0);
+                    Map<String, Object> message = (Map<String, Object>) firstChoice.get("message");
+                    if (message != null && message.containsKey("content")) {
+                        return (String) message.get("content");
                     }
                 }
             }
         } catch (Exception e) {
-            log.error("Failed to parse Gemini response map", e);
+            log.error("Failed to parse Groq response map", e);
         }
         return "Unable to extract insight at this time.";
     }

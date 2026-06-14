@@ -4,7 +4,7 @@
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5-brightgreen)](https://spring.io/)
 [![Weaviate](https://img.shields.io/badge/Weaviate-v1.25-important)](https://weaviate.io/)
 
-CogniFlow is a stock analysis dashboard. It pulls live market data, asks Google Gemini for a quick sentiment summary (a "vibe check"), and stores everything in a Weaviate vector database. Then you can search those insights using plain English.
+CogniFlow is a stock analysis dashboard. It pulls live market data, asks Groq (Llama 3) for a quick sentiment summary (a "vibe check"), and stores everything in a Weaviate vector database. Then you can search those insights using plain English.
 
 Live demo: [https://cogniflowservice-349799058791.europe-west1.run.app/](https://cogniflowservice-349799058791.europe-west1.run.app/)
 
@@ -13,8 +13,8 @@ Live demo: [https://cogniflowservice-349799058791.europe-west1.run.app/](https:/
 ## How it works
 
 1. **Ingest** – The app fetches stock quotes from Alpha Vantage.
-2. **AI vibe check** – The price and change go to Gemini 2.5 Flash, which returns a 2-sentence market sentiment summary.
-3. **Vector storage** – That summary gets turned into an embedding (via Gemini's embedding API) and saved in Weaviate.
+2. **AI vibe check** – The price and change go to Groq (`llama-3.1-8b-instant`), which returns a 2-sentence market sentiment summary.
+3. **Vector storage** – That summary gets turned into an embedding (via Gemini's embedding API, falling back to simulated vectors if the quota is hit) and saved in Weaviate.
 4. **Search UI** – You type a question into the dashboard, and it runs a hybrid search (keywords + vector similarity) over the stored insights.
 
 ```mermaid
@@ -33,7 +33,7 @@ graph TD
 
 - **Backend**: Java 17 + Spring Boot 3.5
 - **Vector DB**: Weaviate v1.25 (running in Docker, accessed via Java Client v4)
-- **AI & embeddings**: Google Gemini 2.5 Flash & Gemini Embedding (`gemini-embedding-001`)
+- **AI & embeddings**: Groq (`llama-3.1-8b-instant`) & Google Gemini Embedding (`gemini-embedding-001` with a robust free-tier fallback)
 - **Market data**: Alpha Vantage API
 - **Frontend**: plain HTML/JS + Tailwind CSS
 
@@ -54,7 +54,7 @@ graph TD
 - Docker & Docker Compose
 - Java 17+
 - Python 3 (only needed for running the mock database seeder script)
-- *(Optional)* Alpha Vantage & Google Gemini API keys – required for live data fetching
+- *(Optional)* Alpha Vantage, Groq, & Google Gemini API keys – required for live data fetching
 
 ---
 
@@ -83,6 +83,7 @@ Edit `src/main/resources/application.properties`:
 ```properties
 cogniflow.alphavantage-api-key=YOUR_ALPHA_VANTAGE_KEY
 cogniflow.google-ai-api-key=YOUR_GEMINI_API_KEY
+cogniflow.groq-api-key=YOUR_GROQ_API_KEY
 cogniflow.job-secret=YOUR_SCHEDULER_SECRET
 
 cogniflow.weaviate.host=localhost

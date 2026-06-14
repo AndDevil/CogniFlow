@@ -55,20 +55,19 @@ class AiAnalysisServiceTest {
         quote.setPrice("150.00");
         quote.setChangePercent("1.5%");
 
-        when(config.getGoogleAiApiKey()).thenReturn("fake-key");
+        when(config.getGroqApiKey()).thenReturn("fake-key");
 
         // Mocking the RestClient chain
         when(restClient.post()).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.uri(anyString())).thenReturn(requestBodySpec);
+        when(requestBodySpec.header(anyString(), anyString())).thenReturn(requestBodySpec);
         when(requestBodySpec.body(any(Map.class))).thenReturn(requestBodySpec);
         when(requestBodySpec.retrieve()).thenReturn(responseSpec);
         
         Map<String, Object> mockResponse = Map.of(
-                "candidates", List.of(Map.of(
-                        "content", Map.of(
-                                "parts", List.of(Map.of(
-                                        "text", "IBM is showing a bullish trend."
-                                ))
+                "choices", List.of(Map.of(
+                        "message", Map.of(
+                                "content", "IBM is showing a bullish trend."
                         )
                 ))
         );
@@ -96,19 +95,18 @@ class AiAnalysisServiceTest {
 
     @Test
     void testResolveCompanyToTicker_Success() {
-        when(config.getGoogleAiApiKey()).thenReturn("fake-key");
+        when(config.getGroqApiKey()).thenReturn("fake-key");
 
         when(restClient.post()).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.uri(anyString())).thenReturn(requestBodySpec);
+        when(requestBodySpec.header(anyString(), anyString())).thenReturn(requestBodySpec);
         when(requestBodySpec.body(any(Map.class))).thenReturn(requestBodySpec);
         when(requestBodySpec.retrieve()).thenReturn(responseSpec);
         
         Map<String, Object> mockResponse = Map.of(
-                "candidates", List.of(Map.of(
-                        "content", Map.of(
-                                "parts", List.of(Map.of(
-                                        "text", " V "
-                                ))
+                "choices", List.of(Map.of(
+                        "message", Map.of(
+                                "content", " V "
                         )
                 ))
         );

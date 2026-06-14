@@ -4,6 +4,7 @@ spring.application.name=cogniflow
 # Replace with your real API keys
 cogniflow.alphavantage-api-key=YOUR_ALPHA_VANTAGE_KEY
 cogniflow.google-ai-api-key=YOUR_GEMINI_API_KEY
+cogniflow.groq-api-key=YOUR_GROQ_API_KEY
 cogniflow.job-secret=YOUR_CRON_JOB_SECRET_TOKEN
 cogniflow.tracked-tickers=IBM,AAPL,MSFT
 
@@ -26,6 +27,7 @@ resilience4j.circuitbreaker.configs.default.failureRateThreshold=50
 
 resilience4j.circuitbreaker.instances.alphaVantage.baseConfig=default
 resilience4j.circuitbreaker.instances.geminiAi.baseConfig=default
+resilience4j.circuitbreaker.instances.groqAi.baseConfig=default
 
 # Actuator Configuration
 management.endpoints.web.exposure.include=health,info,metrics,circuitbreakers

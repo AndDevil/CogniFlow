@@ -22,6 +22,11 @@ public class CogniflowConfig {
     private String googleAiApiKey;
 
     /**
+     * Groq API Key for high-speed analysis.
+     */
+    private String groqApiKey;
+
+    /**
      * List of stock tickers to track.
      */
     private List<String> trackedTickers = List.of("IBM", "AAPL", "MSFT");

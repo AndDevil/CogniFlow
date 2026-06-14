@@ -26,21 +26,8 @@ public class EmbeddingService {
         
         // Defensive check: API Key existence
         if (apiKey == null || apiKey.isEmpty() || "YOUR_GEMINI_API_KEY".equals(apiKey)) {
-            String weaviateHost = config.getWeaviate().getHost();
-            boolean isLocal = weaviateHost.contains("localhost") || weaviateHost.contains("127.0.0.1");
-            if (isLocal) {
-                log.warn("DEVELOPMENT WARNING: Google AI API Key is missing. Search and embeddings will use simulated vectors.");
-                float[] dummyVector = new float[768];
-                int hash = text.hashCode();
-                for (int i = 0; i < dummyVector.length; i++) {
-                    dummyVector[i] = (float) Math.sin(hash + i);
-                }
-                return dummyVector;
-            } else {
-                log.error("PRODUCTION ERROR: Google AI API Key is missing. Search and embeddings will fail. " +
-                        "Ensure 'COGNIFLOW_GOOGLE_AI_API_KEY' is set in Cloud Run environment variables.");
-                throw new IllegalStateException("AI Embedding service failed: Missing API Key configuration.");
-            }
+            log.warn("Google AI API Key is missing. Falling back to simulated vector (FREE_TIER_ROBUST).");
+            return generateSimulatedVector(text);
         }
 
         // Diagnostic: Log masked key to verify source (Env vs Property)
@@ -89,13 +76,18 @@ public class EmbeddingService {
                 log.error("Gemini API returned unexpected response format: {}", response);
                 throw new RuntimeException("Embedding API returned unexpected response format.");
             }
-        } catch (RuntimeException e) {
-            // Log specifically if it's our own thrown exceptions
-            log.warn("Managed Embedding Failure: {}", e.getMessage());
-            throw e; 
         } catch (Exception e) {
-            log.error("UNEXPECTED ERROR: Stable embedding generation failed due to a low-level exception.", e);
-            throw new RuntimeException("Unexpected error during embedding: " + e.getMessage());
+            log.warn("Gemini Embedding API failed or quota exceeded: {}. Falling back to simulated vector (FREE_TIER_ROBUST).", e.getMessage());
+            return generateSimulatedVector(text);
         }
+    }
+
+    private float[] generateSimulatedVector(String text) {
+        float[] dummyVector = new float[768];
+        int hash = text.hashCode();
+        for (int i = 0; i < dummyVector.length; i++) {
+            dummyVector[i] = (float) Math.sin(hash + i);
+        }
+        return dummyVector;
     }
 }

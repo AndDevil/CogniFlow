@@ -76,3 +76,9 @@ Thumbs.db
 # =========================================================================
 .mvn/wrapper/mavan-wrapper.properties
 docker-compose.override.yml
+
+# =========================================================================
+# Interview & Preparation Documents
+# =========================================================================
+docs/cogniflow_interview_answers.md
+docs/project_interview_prep.md

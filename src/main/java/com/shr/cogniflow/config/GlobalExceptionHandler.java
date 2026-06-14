@@ -24,7 +24,7 @@ public class GlobalExceptionHandler {
                 .status(ex.getStatusCode().value())
                 .error(HttpStatus.valueOf(ex.getStatusCode().value()).getReasonPhrase())
                 .errorCode("EXTERNAL_SERVICE_ERROR")
-                .message("An external API (Gemini or Alpha Vantage) returned an error: " + ex.getStatusText())
+                .message("An external API (Groq or Alpha Vantage) returned an error: " + ex.getStatusText())
                 .path(request.getRequestURI())
                 .build();
         
@@ -44,6 +44,8 @@ public class GlobalExceptionHandler {
                 errorCode = "WEAVIATE_CONNECTION_ERROR";
             } else if (message.contains("generativelanguage")) {
                 errorCode = "GEMINI_API_ERROR";
+            } else if (message.contains("groq")) {
+                errorCode = "GROQ_API_ERROR";
             }
         }
 
