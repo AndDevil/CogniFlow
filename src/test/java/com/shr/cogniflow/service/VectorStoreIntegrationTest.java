@@ -1,10 +1,12 @@
 package com.shr.cogniflow.service;
 
 import com.shr.cogniflow.config.CogniflowConfig;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
+import org.junit.jupiter.api.Assumptions;
+import org.testcontainers.DockerClientFactory;
 import org.testcontainers.weaviate.WeaviateContainer;
 
 import java.util.List;
@@ -12,15 +14,34 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@Testcontainers
 class VectorStoreIntegrationTest {
 
-    @Container
     static WeaviateContainer weaviate = new WeaviateContainer("semitechnologies/weaviate:1.24.1");
 
     private VectorStoreService vectorStoreService;
     private CogniflowConfig config;
     private static final int VECTOR_DIM = 1536;
+
+    private static boolean isDockerAvailable() {
+        try {
+            return DockerClientFactory.instance().isDockerAvailable();
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    @BeforeAll
+    static void startContainer() {
+        Assumptions.assumeTrue(isDockerAvailable(), "Docker is not available, skipping integration tests.");
+        weaviate.start();
+    }
+
+    @AfterAll
+    static void stopContainer() {
+        if (weaviate != null && weaviate.isRunning()) {
+            weaviate.stop();
+        }
+    }
 
     @BeforeEach
     void setUp() {
