@@ -1,15 +1,15 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CogniFlow // Vector Memory Search</title>
     
     <!-- SEO & Favicon -->
-    <meta name="description" content="Search stored analytical insights across your vector lake using conceptual queries.">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><defs><linearGradient id=%22g%22 x1=%220%25%22 y1=%220%25%22 x2=%22100%25%22 y2=%22100%25%22><stop offset=%220%25%22 stop-color=%22%236366f1%22/><stop offset=%22100%25%22 stop-color=%22%23a855f7%22/></linearGradient></defs><circle cx=%2250%22 cy=%2250%22 r=%2240%22 fill=%22url(%23g)%22/><path d=%22M35 50 Q 50 35 65 50 T 80 50%22 fill=%22none%22 stroke=%22white%22 stroke-width=%226%22 stroke-linecap=%22round%22/></svg>">
+    <meta name="description" content="Search stored analytical insights across your Weaviate vector database in plain English.">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><defs><linearGradient id=%22g%22 x1=%220%25%22 y1=%220%25%22 x2=%22100%25%22 y2=%22100%25%22><stop offset=%220%25%22 stop-color=%22%23a855f7%22/><stop offset=%22100%25%22 stop-color=%22%2306b6d4%22/></linearGradient></defs><circle cx=%2250%22 cy=%2250%22 r=%2240%22 fill=%22url(%23g)%22/><path d=%22M35 50 Q 50 35 65 50 T 80 50%22 fill=%22none%22 stroke=%22white%22 stroke-width=%226%22 stroke-linecap=%22round%22/></svg>">
 
-    <!-- Google Fonts -->
+    <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -25,114 +25,129 @@
                         mono: ['"JetBrains Mono"', 'monospace'],
                     },
                     colors: {
-                        brand: {
-                            50: '#f5f3ff',
-                            100: '#e0e7ff',
-                            500: '#6366f1',
-                            600: '#4f46e5',
-                            700: '#4338ca',
-                            900: '#312e81',
-                        },
-                        dark: {
-                            background: '#09090b',
-                            card: '#18181b',
-                            border: '#27272a',
+                        cyber: {
+                            midnight: '#020205',  // Deepest obsidian
+                            space: '#070714',     // Dark space blue
+                            card: '#0c0c1e',      // Cyber navy card
+                            border: '#15152d',    // Border tone
+                            purple: '#a855f7',    // Vibrant violet
+                            cyan: '#06b6d4',      // Electric cyan
+                            pink: '#ec4899',      // Accent pink
                         }
                     }
                 }
             }
         }
     </script>
-
+    
     <style>
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #020205;
         }
-        .gradient-glow {
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(168, 85, 247, 0.05) 100%);
+        .grid-bg {
+            background-size: 50px 50px;
+            background-image: 
+                linear-gradient(to right, rgba(255, 255, 255, 0.012) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.012) 1px, transparent 1px);
+        }
+        .mesh-glow-1 {
+            background: radial-gradient(circle, rgba(168, 85, 247, 0.10) 0%, transparent 65%);
+        }
+        .mesh-glow-2 {
+            background: radial-gradient(circle, rgba(6, 182, 212, 0.08) 0%, transparent 65%);
+        }
+        .glow-btn-purple:hover {
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
         }
     </style>
 </head>
-<body class="bg-[#09090b] text-zinc-100 min-h-screen flex flex-col selection:bg-indigo-500/30 selection:text-indigo-200">
+<body class="text-zinc-300 min-h-screen flex flex-col relative grid-bg overflow-x-hidden">
+
+    <!-- Absolute background mesh glows for depth -->
+    <div class="absolute top-0 left-1/3 w-[800px] h-[800px] mesh-glow-1 pointer-events-none z-0"></div>
+    <div class="absolute top-[300px] right-1/4 w-[600px] h-[600px] mesh-glow-2 pointer-events-none z-0"></div>
 
     <!-- Header / Navbar -->
-    <header class="border-b border-zinc-800 bg-[#09090b]/80 backdrop-blur-md sticky top-0 z-50">
+    <header class="border-b border-cyber-border/80 bg-cyber-midnight/70 backdrop-blur-lg sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
             <a href="/" class="flex items-center space-x-3 group">
-                <div class="h-7 w-7 rounded-lg bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white font-extrabold text-sm shadow-md group-hover:scale-105 transition-transform duration-200">
-                    C
+                <div class="h-7 w-7 rounded-lg bg-gradient-to-tr from-cyber-purple via-cyber-pink to-cyber-cyan p-[1px]">
+                    <div class="h-full w-full bg-cyber-midnight rounded-[6px] flex items-center justify-center text-white font-extrabold text-xs group-hover:bg-transparent transition-all">
+                        CF
+                    </div>
                 </div>
-                <span class="text-lg font-bold tracking-tight text-white transition-colors duration-200 group-hover:text-indigo-400">CogniFlow</span>
+                <span class="text-base font-bold tracking-tight text-white transition-colors duration-200 group-hover:text-cyber-cyan">CogniFlow</span>
             </a>
             
-            <div class="flex items-center space-x-6 text-sm font-medium text-zinc-400">
+            <div class="flex items-center space-x-6 text-xs font-semibold uppercase tracking-wider text-zinc-400">
                 <a href="/" class="hover:text-white transition-colors">Home</a>
                 <a href="/swagger-ui.html" target="_blank" class="hover:text-white transition-colors">API Docs</a>
-                <a href="/dashboard" class="hover:text-white transition-colors">Admin Dashboard</a>
+                <a href="/dashboard" class="hover:text-white transition-colors">Console</a>
             </div>
         </div>
     </header>
 
     <!-- Main Container -->
-    <main class="flex-grow max-w-5xl w-full mx-auto px-6 py-12 flex flex-col space-y-8">
+    <main class="flex-grow max-w-5xl w-full mx-auto px-6 py-16 flex flex-col space-y-12 relative z-10">
         
         <!-- Welcome / Title -->
         <div class="text-center max-w-xl mx-auto space-y-3">
-            <h1 class="text-3xl font-extrabold tracking-tight text-white">Interrogate Vector Memory</h1>
-            <p class="text-sm text-zinc-400 font-light">Search stored financial insights and AI-generated vibes using conceptual phrases or company names.</p>
+            <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">Interrogate Vector Memory</h1>
+            <p class="text-sm text-zinc-400 font-light leading-relaxed">Search stored financial insights and Groq sentiment vibes conceptually in plain English.</p>
         </div>
 
         <!-- Search Form Container -->
-        <div class="w-full max-w-3xl mx-auto space-y-4">
-            <div class="flex items-center bg-zinc-900 border border-zinc-800 p-2.5 rounded-2xl focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/20 shadow-xl transition-all duration-200">
+        <div class="w-full max-w-2xl mx-auto space-y-5">
+            <div class="flex items-center bg-cyber-card/90 border border-cyber-border p-2 rounded-xl focus-within:border-cyber-purple focus-within:ring-2 focus-within:ring-cyber-purple/10 shadow-xl transition-all duration-200">
                 <span class="text-zinc-500 pl-3 pr-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                     </svg>
                 </span>
                 <input
                     type="text"
                     id="searchQuery"
                     placeholder="Try: 'IBM recent cloud growth' or 'bullish outlook'"
-                    class="w-full bg-transparent border-0 px-2 py-2 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-0 text-base"
+                    class="w-full bg-transparent border-0 px-2 py-2 text-zinc-100 placeholder-zinc-650 focus:outline-none focus:ring-0 text-sm"
                     onkeydown="if(event.key === 'Enter') executeSearch()"
                 />
                 <button
                     onclick="executeSearch()"
-                    class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm px-6 py-2.5 rounded-xl transition-all shadow-md active:scale-95"
+                    class="bg-gradient-to-r from-cyber-purple to-cyber-pink hover:scale-[1.02] text-white font-bold text-xs uppercase tracking-wider px-6 py-2.5 rounded-lg transition-all shadow-md active:scale-95 glow-btn-purple"
                 >
                     Search
                 </button>
             </div>
 
             <!-- Concept Shortcuts -->
-            <div class="flex flex-wrap gap-2 justify-center items-center text-xs">
-                <span class="text-zinc-500 font-medium">Suggestions:</span>
-                <button onclick="applySuggestion('positive sentiment')" class="bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-300 px-3 py-1.5 rounded-lg transition-colors">Positive Sentiment</button>
-                <button onclick="applySuggestion('IBM cloud growth')" class="bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-300 px-3 py-1.5 rounded-lg transition-colors">IBM Cloud Growth</button>
-                <button onclick="applySuggestion('bullish outlook')" class="bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-300 px-3 py-1.5 rounded-lg transition-colors">Bullish Outlook</button>
+            <div class="flex flex-wrap gap-2 justify-center items-center text-[11px] font-semibold uppercase tracking-wider">
+                <span class="text-zinc-500 font-semibold select-none">Suggestions:</span>
+                <button onclick="applySuggestion('positive sentiment')" class="bg-cyber-card border border-cyber-border hover:border-zinc-700 text-zinc-400 px-3 py-1.5 rounded-lg transition-colors">Positive Sentiment</button>
+                <button onclick="applySuggestion('IBM cloud growth')" class="bg-cyber-card border border-cyber-border hover:border-zinc-700 text-zinc-400 px-3 py-1.5 rounded-lg transition-colors">IBM Cloud Growth</button>
+                <button onclick="applySuggestion('bullish outlook')" class="bg-cyber-card border border-cyber-border hover:border-zinc-700 text-zinc-400 px-3 py-1.5 rounded-lg transition-colors">Bullish Outlook</button>
             </div>
         </div>
 
         <!-- Dynamic Content Section -->
         <div class="w-full max-w-4xl mx-auto">
             <!-- Loading Spinner -->
-            <div id="loadingState" class="hidden flex flex-col justify-center items-center py-16 space-y-4">
-                <svg class="animate-spin h-8 w-8 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <div id="loadingState" class="hidden flex flex-col justify-center items-center py-20 space-y-4">
+                <svg class="animate-spin h-8 w-8 text-cyber-purple" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                <p class="text-sm font-medium text-indigo-400 font-mono animate-pulse">Searching vector database...</p>
+                <p class="text-xs font-semibold text-cyber-purple font-mono tracking-widest uppercase animate-pulse">Searching vector database...</p>
             </div>
 
             <!-- Error Banner -->
-            <div id="errorState" class="hidden bg-red-950/40 border border-red-800/60 p-5 rounded-2xl text-red-200 text-sm space-y-3">
+            <div id="errorState" class="hidden bg-red-950/20 border border-red-900/40 p-6 rounded-xl text-red-200 text-sm space-y-3 backdrop-blur-md">
                 <div class="flex items-center space-x-2">
                     <span>⚠️</span>
                     <span class="font-bold">Failed to search Vector Memory.</span>
                 </div>
-                <p class="text-red-400/80 font-light text-xs" id="errorMessage">Please check your server connection and make sure Weaviate Docker container is running.</p>
-                <button onclick="executeSearch()" class="mt-2 text-xs bg-red-900/40 hover:bg-red-900/60 text-red-200 border border-red-800 px-4 py-2 rounded-lg transition-all font-semibold">
+                <p class="text-red-400/80 font-light text-xs" id="errorMessage">Please check your server connection and make sure Weaviate is running.</p>
+                <button onclick="executeSearch()" class="text-xs bg-red-900/40 hover:bg-red-900/60 text-red-200 border border-red-800 px-4 py-2 rounded-lg transition-all font-semibold">
                     Retry Search
                 </button>
             </div>
@@ -140,7 +155,7 @@
             <!-- Results Grid -->
             <div id="resultsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Loaded Dynamically -->
-                <div class="col-span-full border border-dashed border-zinc-800 rounded-2xl p-16 text-center text-zinc-500 text-sm gradient-glow">
+                <div class="col-span-full border border-dashed border-cyber-border rounded-xl p-16 text-center text-zinc-500 text-sm bg-cyber-card/20 backdrop-blur-sm">
                     Enter a query in the search bar above to fetch matching insights from Weaviate vector memory.
                 </div>
             </div>
@@ -149,8 +164,8 @@
     </main>
 
     <!-- Footer -->
-    <footer class="border-t border-zinc-900 bg-zinc-950/50 py-8 text-center text-xs text-zinc-500 space-y-4">
-        <p class="select-none font-medium text-[10px] uppercase tracking-widest text-zinc-650">© 2026 CogniFlow. Powered by Groq & Weaviate Cloud.</p>
+    <footer class="border-t border-cyber-border/80 bg-cyber-midnight py-8 text-center text-xs text-zinc-500 space-y-4">
+        <p class="select-none font-semibold text-[10px] uppercase tracking-widest text-zinc-650">© 2026 CogniFlow. Powered by Groq & Weaviate Cloud.</p>
     </footer>
 
     <!-- JavaScript logic -->
@@ -173,7 +188,7 @@
 
             if (!query) {
                 resultsGrid.innerHTML = `
-                    <div class="col-span-full border border-dashed border-zinc-800 rounded-2xl p-16 text-center text-zinc-500 text-sm gradient-glow">
+                    <div class="col-span-full border border-dashed border-cyber-border rounded-xl p-16 text-center text-zinc-500 text-sm bg-cyber-card/20 backdrop-blur-sm">
                         Enter a query in the search bar above to fetch matching insights from Weaviate vector memory.
                     </div>
                 `;
@@ -186,10 +201,7 @@
             errorState.classList.add('hidden');
 
             try {
-                // Fetch search results. We use the real API configuration:
-                // query: Search Query string
-                // limit: Maximum 10 cards to grid nicely
-                // hybrid: combines keyword (BM25) and semantic vectors
+                // Fetch search results from backend
                 const response = await fetch(`${API_URL}?query=${encodeURIComponent(query)}&limit=10&hybrid=true`);
                 
                 if (!response.ok) {
@@ -203,12 +215,12 @@
 
                 if (data.length === 0) {
                     resultsGrid.innerHTML = `
-                        <div class="col-span-full border border-dashed border-indigo-500/20 rounded-2xl p-16 text-center text-zinc-400 text-sm bg-indigo-500/5">
-                            <svg class="mx-auto h-12 w-12 text-zinc-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="col-span-full border border-dashed border-cyber-purple/20 rounded-xl p-16 text-center bg-cyber-purple/5 backdrop-blur-sm">
+                            <svg class="mx-auto h-12 w-12 text-zinc-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
-                            <p class="font-semibold text-white text-base mb-1">No results found</p>
-                            <p class="text-zinc-500 text-xs">Try a different search term or add more tracked symbols via the dashboard.</p>
+                            <p class="font-bold text-white text-base mb-1">No results found</p>
+                            <p class="text-zinc-500 text-xs">Try a different search term or scan tickers to populate memory.</p>
                         </div>
                     `;
                     return;
@@ -221,26 +233,26 @@
                     const relevanceScore = calculateRelevanceScore(item.insight, query);
                     
                     return `
-                        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-md hover:border-indigo-500/50 hover:shadow-[0_4px_20px_rgba(99,102,241,0.05)] transition-all duration-300 flex flex-col justify-between space-y-4">
+                        <div class="bg-cyber-card border border-cyber-border rounded-xl p-6 shadow-md hover:border-cyber-purple/40 hover:shadow-[0_4px_25px_rgba(168,85,247,0.05)] transition-all duration-300 flex flex-col justify-between space-y-4">
                             <div class="flex justify-between items-start">
                                 <div class="space-y-1">
                                     <div class="flex items-center space-x-2">
-                                        <span class="text-sm font-bold text-white bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-0.5 rounded-lg">${item.symbol}</span>
+                                        <span class="text-xs font-bold text-cyber-cyan bg-cyber-cyan/10 border border-cyber-cyan/20 px-2.5 py-0.5 rounded-lg font-mono">${item.symbol}</span>
                                         <span class="text-xs font-semibold text-emerald-500 font-mono">$${price}</span>
                                     </div>
-                                    <div class="text-[10px] font-mono text-zinc-500 uppercase tracking-wider">${formattedDate}</div>
+                                    <div class="text-[9px] font-mono text-zinc-500 uppercase tracking-wider">${formattedDate}</div>
                                 </div>
                                 
-                                <span class="text-[10px] font-semibold text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 rounded font-mono">
-                                    Match: ${relevanceScore}%
+                                <span class="text-[9px] font-semibold text-cyber-purple bg-cyber-purple/10 border border-cyber-purple/20 px-2 py-0.5 rounded font-mono">
+                                    MATCH: ${relevanceScore}%
                                 </span>
                             </div>
 
-                            <p class="text-sm text-zinc-300 leading-relaxed font-light select-text">
+                            <p class="text-xs sm:text-sm text-zinc-300 leading-relaxed font-light select-text">
                                 ${item.insight}
                             </p>
 
-                            <div class="flex items-center justify-between pt-3 border-t border-zinc-800 text-[10px] select-none text-zinc-500 font-mono">
+                            <div class="flex items-center justify-between pt-3 border-t border-cyber-border text-[9px] select-none text-zinc-500 font-mono">
                                 <span>Engine: Weaviate hybrid</span>
                                 <span class="flex text-amber-500 font-sans tracking-widest">${'★'.repeat(Math.round(relevanceScore/20))}${'☆'.repeat(5 - Math.round(relevanceScore/20))}</span>
                             </div>

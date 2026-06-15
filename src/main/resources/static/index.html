@@ -3,27 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CogniFlow // AI-Powered Market Intelligence</title>
+    <title>CogniFlow // Intelligent Vector Market Intelligence</title>
     
     <!-- SEO Meta Tags -->
     <meta name="description" content="CogniFlow is an advanced AI-powered market intelligence engine. Harness real-time stock sentiments, Groq qualitative vibe checks, and Weaviate hybrid semantic search.">
     <meta name="keywords" content="Market Intelligence, AI, RAG, Spring Boot, Weaviate, Gemini API, Stock Sentiment">
-    <meta name="author" content="CogniFlow Team">
     
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website">
-    <meta property="og:title" content="CogniFlow // AI-Powered Market Intelligence">
-    <meta property="og:description" content="Harness real-time stock sentiments, Groq qualitative vibe checks, and Weaviate hybrid semantic search.">
-    
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:title" content="CogniFlow // AI-Powered Market Intelligence">
-    <meta property="twitter:description" content="Harness real-time stock sentiments, Groq qualitative vibe checks, and Weaviate hybrid semantic search.">
-
     <!-- Favicon (Sleek Gradient Orbit SVG) -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><defs><linearGradient id=%22g%22 x1=%220%25%22 y1=%220%25%22 x2=%22100%25%22 y2=%22100%25%22><stop offset=%220%25%22 stop-color=%22%236366f1%22/><stop offset=%22100%25%22 stop-color=%22%23a855f7%22/></linearGradient></defs><circle cx=%2250%22 cy=%2250%22 r=%2240%22 fill=%22url(%23g)%22/><path d=%22M35 50 Q 50 35 65 50 T 80 50%22 fill=%22none%22 stroke=%22white%22 stroke-width=%226%22 stroke-linecap=%22round%22/></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><defs><linearGradient id=%22g%22 x1=%220%25%22 y1=%220%25%22 x2=%22100%25%22 y2=%22100%25%22><stop offset=%220%25%22 stop-color=%22%23a855f7%22/><stop offset=%22100%25%22 stop-color=%22%2306b6d4%22/></linearGradient></defs><circle cx=%2250%22 cy=%2250%22 r=%2240%22 fill=%22url(%23g)%22/><path d=%22M35 50 Q 50 35 65 50 T 80 50%22 fill=%22none%22 stroke=%22white%22 stroke-width=%226%22 stroke-linecap=%22round%22/></svg>">
 
-    <!-- Google Fonts: Plus Jakarta Sans -->
+    <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -32,7 +21,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
-            darkMode: 'class',
             theme: {
                 extend: {
                     fontFamily: {
@@ -40,18 +28,14 @@
                         mono: ['"JetBrains Mono"', 'monospace'],
                     },
                     colors: {
-                        brand: {
-                            50: '#f5f3ff',
-                            100: '#e0e7ff',
-                            500: '#6366f1',
-                            600: '#4f46e5',
-                            700: '#4338ca',
-                            900: '#312e81',
-                        },
-                        dark: {
-                            background: '#09090b', // Obsidian dark
-                            card: '#18181b',       // Zinc 900
-                            border: '#27272a',     // Zinc 800
+                        cyber: {
+                            midnight: '#020205',  // Deepest obsidian
+                            space: '#070714',     // Dark space blue
+                            card: '#0c0c1e',      // Cyber navy card
+                            border: '#15152d',    // Border tone
+                            purple: '#a855f7',    // Vibrant violet
+                            cyan: '#06b6d4',      // Electric cyan
+                            pink: '#ec4899',      // Accent pink
                         }
                     }
                 }
@@ -62,36 +46,55 @@
     <style>
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #020205;
         }
-        .gradient-text {
-            background: linear-gradient(135deg, #a855f7 0%, #6366f1 50%, #3b82f6 100%);
+        .grid-bg {
+            background-size: 50px 50px;
+            background-image: 
+                linear-gradient(to right, rgba(255, 255, 255, 0.012) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.012) 1px, transparent 1px);
+        }
+        .mesh-glow-1 {
+            background: radial-gradient(circle, rgba(168, 85, 247, 0.12) 0%, transparent 65%);
+        }
+        .mesh-glow-2 {
+            background: radial-gradient(circle, rgba(6, 182, 212, 0.10) 0%, transparent 65%);
+        }
+        .gradient-text-neon {
+            background: linear-gradient(135deg, #a855f7 0%, #ec4899 50%, #06b6d4 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-        .glow-effect {
-            box-shadow: 0 0 40px -5px rgba(99, 102, 241, 0.15);
+        .glow-btn-purple:hover {
+            box-shadow: 0 0 30px rgba(168, 85, 247, 0.4);
         }
     </style>
 </head>
-<body class="bg-[#09090b] text-zinc-100 min-h-screen flex flex-col selection:bg-indigo-500/30 selection:text-indigo-200">
+<body class="text-zinc-300 min-h-screen flex flex-col relative grid-bg overflow-x-hidden">
+
+    <!-- Absolute background mesh glows for depth -->
+    <div class="absolute top-0 left-1/4 w-[800px] h-[800px] mesh-glow-1 pointer-events-none z-0"></div>
+    <div class="absolute top-[600px] right-1/4 w-[700px] h-[700px] mesh-glow-2 pointer-events-none z-0"></div>
 
     <!-- Header / Navbar -->
-    <header class="sticky top-0 z-50 border-b border-zinc-800 bg-[#09090b]/80 backdrop-blur-md transition-all duration-300">
+    <header class="sticky top-0 z-50 border-b border-cyber-border/80 bg-cyber-midnight/70 backdrop-blur-lg">
         <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
             <div class="flex items-center space-x-3 group">
-                <div class="h-8 w-8 rounded-lg bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white font-extrabold text-lg shadow-lg shadow-indigo-500/20 group-hover:scale-105 transition-transform duration-200">
-                    C
+                <div class="h-8 w-8 rounded-lg bg-gradient-to-tr from-cyber-purple via-cyber-pink to-cyber-cyan p-[1px]">
+                    <div class="h-full w-full bg-cyber-midnight rounded-[7px] flex items-center justify-center text-white font-extrabold text-sm group-hover:bg-transparent transition-all">
+                        CF
+                    </div>
                 </div>
-                <span class="text-xl font-bold tracking-tight text-white transition-colors duration-200 group-hover:text-indigo-400">CogniFlow</span>
+                <span class="text-lg font-bold tracking-tight text-white transition-colors duration-200 group-hover:text-cyber-cyan">CogniFlow</span>
             </div>
             
-            <nav class="hidden md:flex items-center space-x-8 text-sm font-medium text-zinc-400">
+            <nav class="hidden md:flex items-center space-x-8 text-xs font-semibold uppercase tracking-wider text-zinc-400">
                 <a href="#how-it-works" class="hover:text-white transition-colors">How It Works</a>
-                <a href="#features" class="hover:text-white transition-colors">Features</a>
+                <a href="#features" class="hover:text-white transition-colors">Architecture</a>
                 <a href="/swagger-ui.html" target="_blank" class="hover:text-white transition-colors">API Docs</a>
-                <a href="/dashboard" class="hover:text-white transition-colors flex items-center space-x-1">
-                    <span>Admin Dashboard</span>
-                    <span class="px-1.5 py-0.5 text-[10px] font-bold bg-indigo-500/10 text-indigo-400 rounded-md border border-indigo-500/20">Dev Only</span>
+                <a href="/dashboard" class="hover:text-white transition-colors flex items-center space-x-2">
+                    <span>Console</span>
+                    <span class="px-1.5 py-0.5 text-[9px] font-bold bg-cyber-purple/10 text-cyber-purple rounded-md border border-cyber-purple/20">Admin</span>
                 </a>
             </nav>
 
@@ -101,145 +104,189 @@
                         <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"/>
                     </svg>
                 </a>
-                <a href="/search" class="relative group overflow-hidden rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:bg-indigo-500 hover:shadow-[0_0_20px_rgba(99,102,241,0.4)]">
-                    <span class="relative z-10">Try Search</span>
-                </div>
+                <a href="/search" class="rounded-lg bg-white text-zinc-950 px-4 py-2 text-xs font-bold transition-all duration-200 hover:bg-zinc-200 shadow-md">
+                    Try Search
+                </a>
             </div>
         </div>
     </header>
 
-    <!-- Main Content Container -->
-    <main class="flex-grow">
+    <!-- Main Content -->
+    <main class="flex-grow relative z-10">
+        
         <!-- Hero Section -->
-        <section class="relative pt-20 pb-24 overflow-hidden">
-            <!-- Background Radial Glow -->
-            <div class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none"></div>
-            
-            <div class="max-w-5xl mx-auto px-6 text-center space-y-8 relative z-10">
-                <div class="inline-flex items-center space-x-2 bg-indigo-500/10 border border-indigo-500/20 px-3.5 py-1.5 rounded-full text-xs font-semibold tracking-wide text-indigo-400">
+        <section class="pt-24 pb-28 text-center px-6">
+            <div class="max-w-4xl mx-auto space-y-8">
+                
+                <!-- Micro Badge -->
+                <div class="inline-flex items-center space-x-2 bg-cyber-purple/10 border border-cyber-purple/20 px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide text-cyber-purple">
                     <span class="flex h-2 w-2 relative">
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyber-purple opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-cyber-purple"></span>
                     </span>
-                    <span>Powered by Gemini & Weaviate Cloud</span>
+                    <span>Intelligent RAG Architecture v0.0.1</span>
                 </div>
                 
-                <h1 class="text-5xl md:text-7xl font-extrabold tracking-tight text-white leading-tight">
-                    Next-Gen AI-Powered<br>
-                    <span class="gradient-text">Market Intelligence</span>
+                <h1 class="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-white leading-[1.1]">
+                    RAG-Powered Market<br>
+                    <span class="gradient-text-neon">Vibe check Intelligence</span>
                 </h1>
                 
-                <p class="text-lg md:text-xl text-zinc-400 max-w-3xl mx-auto leading-relaxed font-light">
-                    CogniFlow is a real-time retrieval-augmented generation (RAG) engine that extracts qualitative stock sentiments, formats them into quantitative analytical profiles, and lets you query insights semantically in plain English.
+                <p class="text-base sm:text-lg text-zinc-400 max-w-2xl mx-auto leading-relaxed font-light">
+                    Harness high-frequency stock data, generate qualitative sentiment digests via Groq Llama-3, and query real-time market trends conceptually inside Weaviate Vector DB.
                 </p>
                 
                 <div class="flex flex-col sm:flex-row justify-center items-center gap-4 pt-4">
-                    <a href="/search" class="w-full sm:w-auto inline-flex justify-center items-center px-8 py-4 bg-white text-zinc-950 font-bold rounded-xl hover:bg-zinc-100 transition-all hover:scale-[1.02] shadow-xl shadow-white/5 group">
+                    <a href="/search" class="w-full sm:w-auto inline-flex justify-center items-center px-8 py-4 bg-gradient-to-r from-cyber-purple to-cyber-pink text-white font-bold rounded-xl hover:scale-[1.02] transition-transform shadow-lg shadow-cyber-purple/20 glow-btn-purple">
                         <span>Launch Concept Search</span>
-                        <svg class="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                        <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
                         </svg>
                     </a>
-                    <a href="/swagger-ui.html" target="_blank" class="w-full sm:w-auto inline-flex justify-center items-center px-8 py-4 bg-zinc-900 border border-zinc-800 text-zinc-300 font-bold rounded-xl hover:bg-zinc-800 transition-colors">
-                        Explore Swagger API Docs
+                    <a href="/swagger-ui.html" target="_blank" class="w-full sm:w-auto inline-flex justify-center items-center px-8 py-4 bg-cyber-card border border-cyber-border hover:bg-cyber-border text-zinc-300 font-semibold rounded-xl transition-all">
+                        Explore Swagger APIs
                     </a>
                 </div>
             </div>
+            
+            <!-- Simulated Premium Dashboard Widget Mockup -->
+            <div class="max-w-4xl mx-auto mt-20 p-[1px] bg-gradient-to-tr from-cyber-border via-cyber-purple/30 to-cyber-border rounded-2xl shadow-2xl shadow-cyber-purple/5">
+                <div class="bg-cyber-card/90 rounded-[15px] p-6 text-left border border-white/[0.02] backdrop-blur-xl">
+                    <div class="flex justify-between items-center border-b border-cyber-border pb-4 mb-4 select-none">
+                        <div class="flex space-x-1.5">
+                            <div class="w-3 h-3 rounded-full bg-red-500/80"></div>
+                            <div class="w-3 h-3 rounded-full bg-yellow-500/80"></div>
+                            <div class="w-3 h-3 rounded-full bg-green-500/80"></div>
+                        </div>
+                        <div class="text-[10px] font-mono tracking-widest text-zinc-500 uppercase">Interactive Query Console Mockup</div>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div class="flex items-center space-x-2 bg-cyber-midnight border border-cyber-border px-3 py-2 rounded-lg text-xs font-mono">
+                            <span class="text-cyber-purple font-bold">query:</span>
+                            <span class="text-zinc-300">"IBM hybrid cloud scaling and sentiment"</span>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-cyber-midnight/60 border border-cyber-border/70 p-4 rounded-xl space-y-3">
+                                <div class="flex justify-between items-center text-[10px] font-mono">
+                                    <span class="bg-cyber-purple/10 border border-cyber-purple/20 text-cyber-purple font-bold px-2 py-0.5 rounded">IBM</span>
+                                    <span class="text-emerald-500 font-bold">$192.45</span>
+                                </div>
+                                <p class="text-xs text-zinc-400 font-light leading-relaxed">
+                                    IBM shows significant enterprise hybrid cloud velocity. Core Watsonx integration is accelerating developer deployment cycle trends.
+                                </p>
+                                <div class="text-[9px] font-mono text-zinc-600">Relevance: 98% (Weaviate hybrid score)</div>
+                            </div>
+                            <div class="bg-cyber-midnight/60 border border-cyber-border/70 p-4 rounded-xl space-y-3">
+                                <div class="flex justify-between items-center text-[10px] font-mono">
+                                    <span class="bg-cyber-purple/10 border border-cyber-purple/20 text-cyber-purple font-bold px-2 py-0.5 rounded">MSFT</span>
+                                    <span class="text-emerald-500 font-bold">$420.55</span>
+                                </div>
+                                <p class="text-xs text-zinc-400 font-light leading-relaxed">
+                                    Microsoft exhibits robust commercial cloud expansions, but increased capital expenditures in vector infrastructure may compress margins slightly.
+                                </p>
+                                <div class="text-[9px] font-mono text-zinc-600">Relevance: 84% (Weaviate hybrid score)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </section>
 
-        <!-- How It Works Section -->
-        <section id="how-it-works" class="py-24 border-t border-zinc-900 bg-zinc-950/50">
+        <!-- Pipeline Stages / How it Works -->
+        <section id="how-it-works" class="py-24 border-t border-cyber-border/80 bg-cyber-space/35">
             <div class="max-w-7xl mx-auto px-6">
-                <div class="text-center max-w-3xl mx-auto space-y-4 mb-16">
-                    <h2 class="text-3xl md:text-4xl font-extrabold text-white">Behind the RAG Pipeline</h2>
-                    <p class="text-zinc-400 font-light">See how CogniFlow dynamically fetches, refines, indexes, and queries market trends serverless.</p>
+                <div class="text-center max-w-2xl mx-auto space-y-4 mb-16">
+                    <h2 class="text-2xl sm:text-4xl font-extrabold text-white">The CogniFlow Pipeline</h2>
+                    <p class="text-zinc-400 text-sm font-light">Four modular systems integrated serverless into a dynamic Retrieval-Augmented Generation layout.</p>
                 </div>
                 
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-8 relative">
-                    <!-- Step 1 -->
-                    <div class="bg-zinc-900/40 border border-zinc-800 p-6 rounded-2xl relative space-y-4 shadow-sm hover:border-zinc-700 transition-colors">
-                        <div class="h-10 w-10 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400 font-bold text-sm">01</div>
-                        <h3 class="text-lg font-bold text-white">Live Data Ingestion</h3>
-                        <p class="text-sm text-zinc-400 leading-relaxed font-light">
-                            Retrieves high-fidelity live quotes and financial metrics dynamically via the Alpha Vantage integration pipeline.
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                    <!-- Stage 1 -->
+                    <div class="bg-cyber-card/40 border border-cyber-border/70 p-6 rounded-2xl space-y-4 hover:border-cyber-purple/30 transition-all duration-300">
+                        <div class="h-10 w-10 rounded-xl bg-cyber-purple/10 flex items-center justify-center text-cyber-purple font-mono font-bold text-sm">01</div>
+                        <h3 class="text-base font-bold text-white">Ingestion Engine</h3>
+                        <p class="text-xs text-zinc-400 leading-relaxed font-light">
+                            Retrieves live financial indexes and quotes directly from Alpha Vantage API at scheduled scan intervals.
                         </p>
                     </div>
 
-                    <!-- Step 2 -->
-                    <div class="bg-zinc-900/40 border border-zinc-800 p-6 rounded-2xl relative space-y-4 shadow-sm hover:border-zinc-700 transition-colors">
-                        <div class="h-10 w-10 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400 font-bold text-sm">02</div>
-                        <h3 class="text-lg font-bold text-white">AI Vibe Checking</h3>
-                        <p class="text-sm text-zinc-400 leading-relaxed font-light">
-                            Passes metrics to Groq (Llama-3) to synthesize a concise, qualitative vibe check summary summarizing recent shifts.
+                    <!-- Stage 2 -->
+                    <div class="bg-cyber-card/40 border border-cyber-border/70 p-6 rounded-2xl space-y-4 hover:border-cyber-purple/30 transition-all duration-300">
+                        <div class="h-10 w-10 rounded-xl bg-cyber-purple/10 flex items-center justify-center text-cyber-purple font-mono font-bold text-sm">02</div>
+                        <h3 class="text-base font-bold text-white">Groq Vibe Checker</h3>
+                        <p class="text-xs text-zinc-400 leading-relaxed font-light">
+                            Summarizes stock quote price movements dynamically into qualitative sentiment summaries via Llama-3 model.
                         </p>
                     </div>
 
-                    <!-- Step 3 -->
-                    <div class="bg-zinc-900/40 border border-zinc-800 p-6 rounded-2xl relative space-y-4 shadow-sm hover:border-zinc-700 transition-colors">
-                        <div class="h-10 w-10 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400 font-bold text-sm">03</div>
-                        <h3 class="text-lg font-bold text-white">Vector Storage</h3>
-                        <p class="text-sm text-zinc-400 leading-relaxed font-light">
-                            Generates embeddings using Google Gemini Embeddings and persists them securely inside Weaviate Vector DB.
+                    <!-- Stage 3 -->
+                    <div class="bg-cyber-card/40 border border-cyber-border/70 p-6 rounded-2xl space-y-4 hover:border-cyber-purple/30 transition-all duration-300">
+                        <div class="h-10 w-10 rounded-xl bg-cyber-purple/10 flex items-center justify-center text-cyber-purple font-mono font-bold text-sm">03</div>
+                        <h3 class="text-base font-bold text-white">Vector Storage</h3>
+                        <p class="text-xs text-zinc-400 leading-relaxed font-light">
+                            Generates stable vectors via Google Gemini Embeddings and indexes them inside Weaviate Vector Database.
                         </p>
                     </div>
 
-                    <!-- Step 4 -->
-                    <div class="bg-zinc-900/40 border border-zinc-800 p-6 rounded-2xl relative space-y-4 shadow-sm hover:border-zinc-700 transition-colors">
-                        <div class="h-10 w-10 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400 font-bold text-sm">04</div>
-                        <h3 class="text-lg font-bold text-white">Semantic Search</h3>
-                        <p class="text-sm text-zinc-400 leading-relaxed font-light">
-                            Executes vector-based hybrid matching combined with classic BM25 keyword filters to surface relevant cards instantly.
+                    <!-- Stage 4 -->
+                    <div class="bg-cyber-card/40 border border-cyber-border/70 p-6 rounded-2xl space-y-4 hover:border-cyber-purple/30 transition-all duration-300">
+                        <div class="h-10 w-10 rounded-xl bg-cyber-purple/10 flex items-center justify-center text-cyber-purple font-mono font-bold text-sm">04</div>
+                        <h3 class="text-base font-bold text-white">Hybrid Retrieval</h3>
+                        <p class="text-xs text-zinc-400 leading-relaxed font-light">
+                            Resolves plain-English concepts via hybrid logic combining vector proximity with traditional keyword searches.
                         </p>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Features Section -->
-        <section id="features" class="py-24 border-t border-zinc-900">
+        <!-- Technical Highlights -->
+        <section id="features" class="py-24 border-t border-cyber-border/80">
             <div class="max-w-7xl mx-auto px-6">
-                <div class="text-center max-w-3xl mx-auto space-y-4 mb-16">
-                    <h2 class="text-3xl md:text-4xl font-extrabold text-white">Designed for Scale and Speed</h2>
-                    <p class="text-zinc-400 font-light">Leveraging powerful enterprise tech architectures for instant insights retrieval.</p>
+                <div class="text-center max-w-2xl mx-auto space-y-4 mb-16">
+                    <h2 class="text-2xl sm:text-4xl font-extrabold text-white">Technical Highlights</h2>
+                    <p class="text-zinc-400 text-sm font-light">High-performance tech stacks integrated natively for cloud deployments.</p>
                 </div>
                 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <!-- Feature 1 -->
-                    <div class="bg-zinc-900/20 border border-zinc-800 p-8 rounded-2xl space-y-4 hover:border-zinc-700 transition-all duration-300 shadow-md">
-                        <div class="h-12 w-12 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-400">
-                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    <div class="bg-cyber-card/25 border border-cyber-border/60 p-8 rounded-2xl space-y-4 hover:border-cyber-cyan/30 transition-all duration-300">
+                        <div class="h-12 w-12 rounded-xl bg-cyber-cyan/10 flex items-center justify-center text-cyber-cyan mb-2">
+                            <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.905 0-5.64-.5-8.143-1.418m16.286 0A11.947 11.947 0 0112 15c-3.18 0-6.143-.62-8.857-1.728"/>
                             </svg>
                         </div>
-                        <h3 class="text-xl font-bold text-white">Fast In-Memory Vector DB</h3>
-                        <p class="text-sm text-zinc-400 leading-relaxed font-light">
-                            Queries are resolved instantly in 3D multi-dimensional vector space mapped directly inside Weaviate Cloud cluster instance.
+                        <h3 class="text-lg font-bold text-white">Hybrid Searching</h3>
+                        <p class="text-xs text-zinc-400 leading-relaxed font-light">
+                            Combines semantic vector distance calculations with classic keyword metrics (BM25) for highly accurate search matching results.
                         </p>
                     </div>
 
                     <!-- Feature 2 -->
-                    <div class="bg-zinc-900/20 border border-zinc-800 p-8 rounded-2xl space-y-4 hover:border-zinc-700 transition-all duration-300 shadow-md">
-                        <div class="h-12 w-12 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-400">
-                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                    <div class="bg-cyber-card/25 border border-cyber-border/60 p-8 rounded-2xl space-y-4 hover:border-cyber-pink/30 transition-all duration-300">
+                        <div class="h-12 w-12 rounded-xl bg-cyber-pink/10 flex items-center justify-center text-cyber-pink mb-2">
+                            <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/>
                             </svg>
                         </div>
-                        <h3 class="text-xl font-bold text-white">Fallback Protection</h3>
-                        <p class="text-sm text-zinc-400 leading-relaxed font-light">
-                            Features robust offline mocking mechanisms so the vector search pipeline operates locally even without production API keys.
+                        <h3 class="text-lg font-bold text-white">Resilience & Protection</h3>
+                        <p class="text-xs text-zinc-400 leading-relaxed font-light">
+                            Protected by robust fallback systems, including simulated embeddings, allowing vector queries to succeed offline when api quotas are reached.
                         </p>
                     </div>
 
                     <!-- Feature 3 -->
-                    <div class="bg-zinc-900/20 border border-zinc-800 p-8 rounded-2xl space-y-4 hover:border-zinc-700 transition-all duration-300 shadow-md">
-                        <div class="h-12 w-12 rounded-xl bg-pink-500/10 flex items-center justify-center text-pink-400">
-                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    <div class="bg-cyber-card/25 border border-cyber-border/60 p-8 rounded-2xl space-y-4 hover:border-cyber-purple/30 transition-all duration-300">
+                        <div class="h-12 w-12 rounded-xl bg-cyber-purple/10 flex items-center justify-center text-cyber-purple mb-2">
+                            <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.59 14.37a6 6 0 01-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 006.16-12.12A14.98 14.98 0 009.61 3.51a14.993 14.993 0 00-6.16 12.12c0 2.977 1.016 5.73 2.72 7.9M18 18v.01M21 21v.01"/>
                             </svg>
                         </div>
-                        <h3 class="text-xl font-bold text-white">Scheduled Scanning</h3>
-                        <p class="text-sm text-zinc-400 leading-relaxed font-light">
-                            Autonomously triggers scheduled scanning cycles utilizing Google Cloud Scheduler and Serverless Cloud Run configurations.
+                        <h3 class="text-lg font-bold text-white">Scheduled Automation</h3>
+                        <p class="text-xs text-zinc-400 leading-relaxed font-light">
+                            Configured for zero-maintenance cron scans using secure Google Cloud Scheduler triggers mapped to serverless Cloud Run endpoints.
                         </p>
                     </div>
                 </div>
@@ -248,13 +295,13 @@
     </main>
 
     <!-- Footer -->
-    <footer class="border-t border-zinc-900 bg-zinc-950 py-12 text-center text-xs text-zinc-500 space-y-4">
+    <footer class="border-t border-cyber-border/80 bg-[#020205] py-12 text-zinc-500 text-xs mt-auto">
         <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
-            <p class="font-medium uppercase tracking-wider text-[10px] text-zinc-600">© 2026 CogniFlow. All rights reserved.</p>
-            <div class="flex items-center space-x-6 text-sm">
+            <p class="font-semibold uppercase tracking-wider text-[10px] text-zinc-600 select-none">© 2026 CogniFlow. All rights reserved.</p>
+            <div class="flex items-center space-x-6 text-sm font-medium">
                 <a href="/search" class="hover:text-white transition-colors">Search UI</a>
-                <a href="/swagger-ui.html" target="_blank" class="hover:text-white transition-colors">API Swagger Docs</a>
-                <a href="/dashboard" class="hover:text-white transition-colors">Dev Dashboard</a>
+                <a href="/swagger-ui.html" target="_blank" class="hover:text-white transition-colors">API Docs</a>
+                <a href="/dashboard" class="hover:text-white transition-colors">Console</a>
             </div>
         </div>
     </footer>
