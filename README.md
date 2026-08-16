@@ -6,7 +6,7 @@
 
 CogniFlow is a stock analysis dashboard. It pulls live market data, asks Groq (Llama 3) for a quick sentiment summary (a "vibe check"), and stores everything in a Weaviate vector database. Then you can search those insights using plain English.
 
-Live demo: [https://cogniflowservice-349799058791.europe-west1.run.app/](https://cogniflowservice-349799058791.europe-west1.run.app/)
+Live demo: [https://cogniflow-5c687.containers.snapdeploy.app/](https://cogniflow-5c687.containers.snapdeploy.app/)
 
 ---
 
@@ -134,15 +134,33 @@ Swagger docs are available at [http://localhost:8080/swagger-ui.html](http://loc
 
 *Note: This section is for production deployment. Skip it for local development.*
 
-The app is set up to deploy to Google Cloud Run via Google Cloud Build.
-Pushing to the `deployGC` branch triggers the build automatically:
+The app is set up to deploy to **snapdeploy** (Zeabur) using the `snapdeploy` branch.
+Pushing to the `snapdeploy` branch triggers the build automatically:
 ```bash
 git add .
-git commit -m "Update application configs"
-git push origin deployGC
+git commit -m "Deploy to snapdeploy"
+git push origin snapdeploy
 ```
 
-The scheduled scans run serverless: a Cloud Scheduler job periodically hits `/api/internal/run-scan` with the required authorization header. That way the Cloud Run container can scale to zero when idle. For detailed instructions on provisioning the OIDC service account and creating the Cloud Scheduler job, see the [GCP Deployment Guide](docs/gcp_deployment_guide.md).
+### Environment Variables & Secrets
+Configure the following in your snapdeploy application dashboard:
+
+**Variables (Config):**
+*   `SERVER_PORT`: `8080` (or `${PORT:-8080}`)
+*   `COGNIFLOW_WEAVIATE_HOST`: `*(Weaviate Host URL)*`
+*   `COGNIFLOW_WEAVIATE_PORT`: `*(Weaviate Port)*`
+*   `COGNIFLOW_WEAVIATE_SCHEME`: `*(Weaviate Scheme)*`
+*   `WEAVIATE_GRPC_URL`: `*(Weaviate gRPC URL)*`
+
+**Secrets (Sensitive Keys):**
+*   `COGNIFLOW_WEAVIATE_API_KEY`: *(Weaviate API Key)*
+*   `COGNIFLOW_GROQ_API_KEY`: *(Groq API Key)*
+*   `COGNIFLOW_JOB_SECRET`: *(Scheduler Job Secret)*
+*   `COGNIFLOW_GOOGLE_AI_API_KEY`: *(Gemini API Key)*
+*   `COGNIFLOW_ALPHAVANTAGE_API_KEY`: *(AlphaVantage API Key)*
+
+### Cold Start Prevention
+The free tier of snapdeploy puts container instances to sleep after 1 hour of inactivity. To prevent cold starts, we have included a GitHub Actions workflow in `.github/workflows/keep_warm.yml` that pings the web app automatically every 45 minutes to keep it active.
 
 ---
 
